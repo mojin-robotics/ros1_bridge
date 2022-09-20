@@ -389,7 +389,7 @@ ros2 run demo_nodes_cpp add_two_ints_client
 This example expands on example 3 by selecting a subset of topics and services to be bridged.
 This is handy when, for example, you have a system that runs most of it's stuff in either ROS 1 or ROS 2 but needs a few nodes from the 'opposite' version of ROS.
 Where the `dynamic_bridge` bridges all topics and service, the `parameter_bridge` uses the ROS 1 parameter server to choose which topics and services are bridged.
-**Note**: The service bridge is **monodirectional**. You must use either `services_2_to_1` and/or `services_1_or_2` to bridge ROS 2 -> ROS 1 or ROS 1 -> ROS 2 services accordingly.
+**Note**: The service bridge is **monodirectional**. You must use either `services_2_to_1` and/or `services_1_to_2` to bridge ROS 2 -> ROS 1 or ROS 1 -> ROS 2 services accordingly.
 For example, to bridge only the `/chatter` topic bidirectionally, and the `/add_two_ints service` from ROS 2 to ROS 1 only, create this configuration file, `bridge.yaml`:
 
 ```yaml
@@ -502,3 +502,51 @@ topics:
 ```
 
 Note that the `qos` section can be omitted entirely and options not set are left default.
+
+# Action bridge
+
+This bridge extends the `ros1_bridge` to action interface. The bridge works in both directions, meaning an action goal can be sent from ROS1 client to ROS2 server, or from ROS2 client to ROS1 server.
+
+The arguments for `action_bridge` node are:  
+`direction`: from client (`ros1` or `ros2`)
+e.g.:
+- `ROS1` client to `ROS2` server --> `direction` = `ros1`
+- `ROS2` client to `ROS1` server --> `direction` = `ros2`  
+
+`package`: package of the `ROS1` server node  
+`type`: action interface type of `ROS1`  
+`name`: action name
+
+For sending goals from ROS2 action client to ROS1 action server
+```
+# Terminal 1 -- action bridge
+# Make sure roscore is already running
+source <ros1_bridge-install-dir>/setup.bash
+ros2 run ros1_bridge action_bridge ros1 actionlib_tutorials Fibonacci fibonacci
+
+# Terminal 2 -- ROS1 action server
+source <ros1-install-dir>/setup.bash
+rosrun actionlib_tutorials fibonacci_server
+
+# Terminal 3 -- ROS2 action client
+source <ros2-install-dir>/setup.bash
+ros2 run action_tutorials_cpp fibonacci_action_client 20
+```
+
+For sending goals from ROS1 action client to ROS2 action server
+```
+# Terminal 1 -- action bridge
+# Make sure roscore is already running
+source <ros1_bridge-install-dir>/setup.bash
+ros2 run ros1_bridge action_bridge ros2 action_tutorials_interfaces action/Fibonacci fibonacci
+
+# Terminal 2 -- ROS2 action server
+source <ros2-install-dir>/setup.bash
+ros2 run action_tutorials_cpp fibonacci_action_server
+
+# Terminal 3 -- ROS1 action client
+source <ros1-install-dir>/setup.bash
+rosrun actionlib_tutorials fibonacci_client 20
+```
+
+`dynamic_bridge` has been extended to handle actions as well.
