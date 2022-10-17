@@ -68,6 +68,7 @@ import rosmsg  # noqa
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
     data = generate_messages(rospack)
+    # breakpoint()
     message_string_pairs = {
         (
             '%s/%s' % (m.ros1_msg.package_name, m.ros1_msg.message_name),
@@ -162,9 +163,15 @@ def generate_cpp(output_path, template_dir):
 def generate_messages(rospack=None):
     ros1_msgs = get_ros1_messages(rospack=rospack)
     ros2_package_names, ros2_msgs, mapping_rules = get_ros2_messages()
+    # print(mapping_rules)
+    uuid_rules = [rule for rule in mapping_rules if rule.ros1_message_name == "UniqueID"]
+    print(f"uuid_rules: {uuid_rules}")
 
     package_pairs = determine_package_pairs(ros1_msgs, ros2_msgs, mapping_rules)
     message_pairs = determine_message_pairs(ros1_msgs, ros2_msgs, package_pairs, mapping_rules)
+    # print(message_pairs)
+    uuid_pair = [pair for pair in message_pairs if pair[0].message_name == 'UniqueID'][0]
+    amr_pair = [pair for pair in message_pairs if pair[0].message_name == 'OperationModeStatus'][0]
 
     mappings = []
     # add custom mapping for builtin_interfaces
@@ -185,6 +192,8 @@ def generate_messages(rospack=None):
 
     for ros1_msg, ros2_msg in message_pairs:
         mapping = determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx)
+        # if ros1_msg.message_name in [uuid_pair[0].message_name, "OperationModeStatus"]:
+        #     print(mapping)
         if mapping:
             mappings.append(mapping)
 
@@ -423,6 +432,9 @@ class MappingRule:
     def is_foreign_mapping(self):
         return self.foreign_mapping
 
+    def __str__(self):
+        return f"MappingRule(ros1={self.ros1_package_name}, ros2={self.ros2_package_name}, package_mapping={self.package_mapping}, foreign_mapping={self.foreign_mapping})"
+
     def __repr__(self):
         return self.__str__()
 
@@ -464,7 +476,7 @@ class MessageMappingRule(MappingRule):
         return self.fields_1_to_2 is not None
 
     def __str__(self):
-        return 'MessageMappingRule(%s <-> %s)' % (self.ros1_package_name, self.ros2_package_name)
+        return 'MessageMappingRule(%s <-> %s): %s' % (self.ros1_package_name, self.ros2_package_name, self.fields_1_to_2)
 
 
 class ServiceMappingRule(MappingRule):
@@ -558,11 +570,14 @@ def determine_message_pairs(ros1_msgs, ros2_msgs, package_pairs, mapping_rules):
 
     # add manual message mapping rules
     for rule in mapping_rules:
+        # print(f"Processing mapping rule {rule}")
         if not rule.is_message_mapping():
+            # print(f"{rule}: not a message mapping rule")
             continue
         for ros1_msg in ros1_msgs:
             if rule.ros1_package_name == ros1_msg.package_name and \
                     rule.ros1_message_name == ros1_msg.message_name:
+                # print(f"{rule}: found the ROS1 pkg+msg for this rule")
                 break
         else:
             # skip unknown messages
@@ -570,6 +585,7 @@ def determine_message_pairs(ros1_msgs, ros2_msgs, package_pairs, mapping_rules):
         for ros2_msg in ros2_msgs:
             if rule.ros2_package_name == ros2_msg.package_name and \
                     rule.ros2_message_name == ros2_msg.message_name:
+                # print(f"{rule}: found the ROS2 pkg+msg for this rule")
                 break
         else:
             # skip unknown messages
@@ -577,7 +593,10 @@ def determine_message_pairs(ros1_msgs, ros2_msgs, package_pairs, mapping_rules):
 
         pair = (ros1_msg, ros2_msg)
         if pair not in pairs:
+            # print(f"{rule}: found a new pair: {pair}")
             pairs.append(pair)
+        # else:
+            # print(f"{rule}: found an existing pair: {pair}")
 
     return pairs
 
@@ -743,6 +762,8 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
     :type mapping_rules: list of MessageMappingRule
     :type msg_idx: MessageIndex
     """
+    debug = ros1_msg.message_name in ['UniqueID'] #, 'OperationModeStatus']
+
     ros1_spec = load_ros1_message(ros1_msg)
     if not ros1_spec:
         return None
@@ -751,19 +772,27 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
         return None
 
     mapping = Mapping(ros1_msg, ros2_msg)
+    if debug: print(f"determine_field_mapping: before processing: {mapping}")
 
     # check for manual field mapping rules first
     for rule in mapping_rules:
+        if debug: print(f"determine_field_mapping: processing rule {rule}")
+
         if not rule.is_field_mapping():
+            if debug: print(f"determine_field_mapping: continue 1")
             continue
         if rule.ros1_package_name != ros1_msg.package_name or \
                 rule.ros1_message_name != ros1_msg.message_name:
+            if debug: print(f"determine_field_mapping: Rule does not apply to this message. continue 2")
             continue
         if rule.ros2_package_name != ros2_msg.package_name or \
                 rule.ros2_message_name != ros2_msg.message_name:
+            if debug: print(f"determine_field_mapping: Rule does not apply to this message. continue 3")
             continue
 
         for ros1_field_selection, ros2_field_selection in rule.fields_1_to_2.items():
+            if debug: 
+                print(f"determine_field_mapping: ros1_field_selection={ros1_field_selection}, ros2_field_selection={ros2_field_selection}")
             try:
                 ros1_selected_fields = \
                     get_ros1_selected_fields(ros1_field_selection, ros1_spec, msg_idx)
@@ -771,8 +800,8 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                 print(
                     "A manual mapping refers to an invalid field '%s' " % ros1_field_selection +
                     "in the ROS 1 message '%s/%s'" %
-                    (rule.ros1_package_name, rule.ros1_message_name),
-                    file=sys.stderr)
+                    (rule.ros1_package_name, rule.ros1_message_name))
+                if debug: print(f"determine_field_mapping: continue 4")
                 continue
             try:
                 ros2_selected_fields = \
@@ -781,8 +810,8 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                 print(
                     "A manual mapping refers to an invalid field '%s' " % ros2_field_selection +
                     "in the ROS 2 message '%s/%s'" %
-                    (rule.ros2_package_name, rule.ros2_message_name),
-                    file=sys.stderr)
+                    (rule.ros2_package_name, rule.ros2_message_name))
+                if debug: print(f"determine_field_mapping: continue 5")
                 continue
             mapping.add_field_pair(ros1_selected_fields, ros2_selected_fields)
         return mapping
@@ -791,8 +820,11 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
     ros1_field_missing_in_ros2 = False
 
     for ros1_field in ros1_spec.parsed_fields():
+        # if debug: print(f"determine_field_mapping: Processing ros1_field '{ros1_field.name}'")
         for ros2_member in ros2_spec.structure.members:
+            # if debug: print(f"determine_field_mapping: Processing ros2_member '{ros2_member.name}'")
             if ros1_field.name.lower() == ros2_member.name:
+                if debug: print(f"These match: '{ros1_field.name}' with '{ros2_member.name}'")
                 # get package name and message name from ROS 1 field type
                 update_ros1_field_information(ros1_field, ros1_msg.package_name)
                 mapping.add_field_pair(ros1_field, ros2_member)
@@ -800,6 +832,8 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
         else:
             # this allows fields to exist in ROS 1 but not in ROS 2
             ros1_field_missing_in_ros2 = True
+    
+    if debug: print(f"determine_field_mapping: ros1_field_missing_in_ros2={ros1_field_missing_in_ros2}")
 
     if ros1_field_missing_in_ros2:
         # if some fields exist in ROS 1 but not in ROS 2
@@ -811,8 +845,10 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                     break
             else:
                 # if fields from both sides are not mappable the whole message is not mappable
+                print("Early return 2")
                 return None
 
+    if debug: print(f"determine_field_mapping: after processing: {mapping}")
     return mapping
 
 
@@ -944,7 +980,9 @@ class Mapping:
             msg_name = ros2_member.type.name
             if pkg_name != 'builtin_interfaces':
                 self.depends_on_ros2_messages.add(Message(pkg_name, msg_name))
-
+    
+    def __str__(self):
+        return f"Mapping({self.ros1_msg} <-> {self.ros2_msg}):\n\t1->2: {self.fields_1_to_2},\n\t2->1: {self.fields_2_to_1}"
 
 def camel_case_to_lower_case_underscore(value):
     # insert an underscore before any upper case letter
