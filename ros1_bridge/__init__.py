@@ -1076,6 +1076,10 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                 if debug: print(f"determine_field_mapping: continue 5")
                 continue
             mapping.add_field_pair(ros1_selected_fields, ros2_selected_fields)
+        else:
+            if debug: print(f"determine_field_mapping: All rule.fields_1_to_2.items() processed")
+        # print("Early return 1")
+        # return mapping
 
     # apply name based mapping of fields
     ros1_field_missing_in_ros2 = False
