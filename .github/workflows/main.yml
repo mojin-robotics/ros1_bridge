@@ -20,6 +20,10 @@ jobs:
       - uses: ros-tooling/setup-ros@v0.2
         with:
           required-ros-distributions: "${{matrix.ros1.distro}} ${{matrix.ros2.distro}}"
+      - id: custom_build_sequence
+        name: custom_build_sequence
+        run: |
+          sudo apt install ros-${{matrix.ros2.distro}}-ros1-bridge -y
       - name: Build and test ros1-bridge
         uses: ros-tooling/action-ros-ci@v0.2
         with:
