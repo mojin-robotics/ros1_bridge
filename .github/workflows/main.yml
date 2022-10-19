@@ -1,4 +1,4 @@
-name: CI
+name: CI_main
 
 on: [push, pull_request] # on all pushes and PRs
 
