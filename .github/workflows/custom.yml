@@ -1,0 +1,30 @@
+name: CI_custom
+
+on: [push, pull_request] # on all pushes and PRs
+
+jobs:
+  custom:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ros1:
+          - distro: noetic
+        ros2:
+          - distro: foxy
+          - distro: rolling
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ros-tooling/setup-ros@v0.2
+        with:
+          required-ros-distributions: "${{matrix.ros1.distro}} ${{matrix.ros2.distro}}"
+      - name: custom build sequence
+        run: |
+          source /opt/ros/${{matrix.ros1.distro}}/setup.bash
+          source /opt/ros/${{matrix.ros2.distro}}/local_setup.bash
+        # cd /root
+        # colcon build --packages-select ros1_bridge --cmake-force-configure --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release
+
+
