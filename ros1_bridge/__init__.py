@@ -846,7 +846,11 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
     ros1_field_missing_in_ros2 = any(ros1_fields_not_mapped)
     
     if debug: print(f"determine_field_mapping: ros1_field_missing_in_ros2={ros1_field_missing_in_ros2}")
+    
+    ros2_fields_mapped_to_a_ros1_member = [member[0].name for member in mapping.fields_2_to_1.keys()]
+    if debug: print(f"determine_field_mapping: ros2_fields_mapped_to_a_ros1_member={ros2_fields_mapped_to_a_ros1_member}")
 
+    ros2_members_not_mapped = []
     if ros1_field_missing_in_ros2:
         # if some fields exist in ROS 1 but not in ROS 2
         # check that no fields exist in ROS 2 but not in ROS 1
@@ -854,14 +858,14 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
         for ros2_member in ros2_spec.structure.members:
             for ros1_field in ros1_spec.parsed_fields():
                 if ros1_field.name.lower() == ros2_member.name:
-                    break
+                    break  # Found a matching field for this member
+            # Exhausted all ros1 fields, maybe there is a mapping instead?
+            if not ros2_member.name in ros2_fields_mapped_to_a_ros1_member:
+                if debug: print(f"determine_field_mapping: ros2 {ros2_member} has no mapping to ros1 yet")
             else:
-                # if fields from both sides are not mappable the whole message is not mappable
-                if debug: print("Field from both sides are not mappable, Early return 2")
-                if TODO: #  TODO field is not already in mapping
-                    pass
-                else:
-                    return None
+                # The member has no mapping to a ros1 field either, it's game over, messages do not match
+                if debug: print(f"Member {ros2_member} has no match nor mapping. Early return 2")
+                return None
 
     if debug: print(f"determine_field_mapping: after processing: {mapping}")
     return mapping
