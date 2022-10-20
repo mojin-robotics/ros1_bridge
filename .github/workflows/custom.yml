@@ -23,6 +23,7 @@ jobs:
       - id: custom_build_sequence
         name: custom_build_sequence
         run: |
+          sudo apt install ros-${{matrix.ros2.distro}}-gazebo-msgs -y
           source /opt/ros/${{matrix.ros1.distro}}/setup.bash
           source /opt/ros/${{matrix.ros2.distro}}/local_setup.bash
           colcon build --packages-select ros1_bridge --cmake-force-configure --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release
