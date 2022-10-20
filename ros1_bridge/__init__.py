@@ -14,6 +14,7 @@
 
 from collections import OrderedDict
 import os
+import pprint
 import re
 import sys
 
@@ -70,6 +71,7 @@ for package_path in reversed([p for p in rpp if p]):
             sys.path.insert(0, sys_path)
 import rosmsg  # noqa
 
+DEBUGGED_MSGS = ['ODEJointProperties'] #'UniqueID', 'OperationModeStatus']]
 
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
@@ -186,14 +188,11 @@ def generate_messages(rospack=None):
     ros1_msgs = get_ros1_messages(rospack=rospack)
     ros2_package_names, ros2_msgs, mapping_rules = get_ros2_messages()
     # print(mapping_rules)
-    uuid_rules = [rule for rule in mapping_rules if rule.ros1_message_name == "UniqueID"]
-    print(f"uuid_rules: {uuid_rules}")
+    focus_rules = [rule for rule in mapping_rules if rule.ros1_message_name in DEBUGGED_MSGS]
+    print(f"focus_rules: {focus_rules}")
 
     package_pairs = determine_package_pairs(ros1_msgs, ros2_msgs, mapping_rules)
     message_pairs = determine_message_pairs(ros1_msgs, ros2_msgs, package_pairs, mapping_rules)
-    # print(message_pairs)
-    uuid_pair = [pair for pair in message_pairs if pair[0].message_name == 'UniqueID'][0]
-    amr_pair = [pair for pair in message_pairs if pair[0].message_name == 'OperationModeStatus'][0]
 
     mappings = []
     # add custom mapping for builtin_interfaces
@@ -214,8 +213,8 @@ def generate_messages(rospack=None):
 
     for ros1_msg, ros2_msg in message_pairs:
         mapping = determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx)
-        # if ros1_msg.message_name in [uuid_pair[0].message_name, "OperationModeStatus"]:
-        #     print(mapping)
+        if ros1_msg.message_name in DEBUGGED_MSGS:
+            print(mapping)
         if mapping:
             mappings.append(mapping)
 
@@ -582,7 +581,7 @@ class MessageMappingRule(MappingRule):
         return self.fields_1_to_2 is not None
 
     def __str__(self):
-        return 'MessageMappingRule(%s <-> %s): %s' % (self.ros1_package_name, self.ros2_package_name, self.fields_1_to_2)
+        return f'MessageMappingRule({self.ros1_package_name} <-> {self.ros2_package_name}:\n{pprint.pformat(self.fields_1_to_2)})'
 
 
 class ServiceMappingRule(MappingRule):
@@ -1022,7 +1021,7 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
     :type mapping_rules: list of MessageMappingRule
     :type msg_idx: MessageIndex
     """
-    debug = ros1_msg.message_name in ['UniqueID'] #, 'OperationModeStatus']
+    debug = ros1_msg.message_name in DEBUGGED_MSGS
 
     ros1_spec = load_ros1_message(ros1_msg)
     if not ros1_spec:
@@ -1078,8 +1077,8 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
             mapping.add_field_pair(ros1_selected_fields, ros2_selected_fields)
         else:
             if debug: print(f"determine_field_mapping: All rule.fields_1_to_2.items() processed")
-        # print("Early return 1")
         # return mapping
+        if debug: print(f"determine_field_mapping: after processing mapping rules but early return 1: {mapping}")
 
     # apply name based mapping of fields
     ros1_field_missing_in_ros2 = False
@@ -1110,7 +1109,7 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                     break
             else:
                 # if fields from both sides are not mappable the whole message is not mappable
-                print("Early return 2")
+                if debug: print("Early return 2")
                 return None
 
     if debug: print(f"determine_field_mapping: after processing: {mapping}")
@@ -1376,7 +1375,7 @@ class Mapping:
                 self.depends_on_ros2_messages.add(Message(pkg_name, msg_name))
     
     def __str__(self):
-        return f"Mapping({self.ros1_msg} <-> {self.ros2_msg}):\n\t1->2: {self.fields_1_to_2},\n\t2->1: {self.fields_2_to_1}"
+        return f"Mapping({self.ros1_msg} <-> {self.ros2_msg}):\n\t1->2: {pprint.pformat(self.fields_1_to_2)},\n\t2->1: {pprint.pformat(self.fields_2_to_1)}"
 
 def camel_case_to_lower_case_underscore(value):
     # insert an underscore before any upper case letter
