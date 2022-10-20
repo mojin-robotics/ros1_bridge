@@ -1084,19 +1084,28 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
     # apply name based mapping of fields
     ros1_field_missing_in_ros2 = False
 
+    ros1_fields_not_mapped = []
     for ros1_field in ros1_spec.parsed_fields():
         # if debug: print(f"determine_field_mapping: Processing ros1_field '{ros1_field.name}'")
         for ros2_member in ros2_spec.structure.members:
             # if debug: print(f"determine_field_mapping: Processing ros2_member '{ros2_member.name}'")
             if ros1_field.name.lower() == ros2_member.name:
-                if debug: print(f"These match: '{ros1_field.name}' with '{ros2_member.name}'")
+                if debug: print(f"determine_field_mapping: These match: '{ros1_field.name}' with '{ros2_member.name}'")
                 # get package name and message name from ROS 1 field type
                 update_ros1_field_information(ros1_field, ros1_msg.package_name)
                 mapping.add_field_pair(ros1_field, ros2_member)
                 break
-        else:
+    
+        ros1_fields_mapped_to_a_ros2_member = [field[0].name for field in mapping.fields_1_to_2.keys()]
+        if debug: print(f"determine_field_mapping: ros1_fields_mapped_to_ros2_member={ros1_fields_mapped_to_a_ros2_member}")
+        if not ros1_field.name in ros1_fields_mapped_to_a_ros2_member:
             # this allows fields to exist in ROS 1 but not in ROS 2
-            ros1_field_missing_in_ros2 = True
+            if debug: print(f"determine_field_mapping: ros1 {ros1_field} has no mapping to ros2 yet")
+            ros1_fields_not_mapped += [ros1_field]
+        else:
+            if debug: print(f"determine_field_mapping: ros1 {ros1_field} is mapped to ros2")
+    
+    ros1_field_missing_in_ros2 = any(ros1_fields_not_mapped)
     
     if debug: print(f"determine_field_mapping: ros1_field_missing_in_ros2={ros1_field_missing_in_ros2}")
 
@@ -1110,8 +1119,11 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                     break
             else:
                 # if fields from both sides are not mappable the whole message is not mappable
-                if debug: print("Early return 2")
-                return None
+                if debug: print("Field from both sides are not mappable, Early return 2")
+                if TODO: #  TODO field is not already in mapping
+                    pass
+                else:
+                    return None
 
     if debug: print(f"determine_field_mapping: after processing: {mapping}")
     return mapping
