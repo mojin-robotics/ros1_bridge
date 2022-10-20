@@ -70,7 +70,6 @@ DEBUGGED_MSGS = ['ODEJointProperties'] #'UniqueID', 'OperationModeStatus']]
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
     data = generate_messages(rospack)
-    breakpoint()
     # breakpoint()
     message_string_pairs = {
         (
