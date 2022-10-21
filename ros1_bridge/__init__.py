@@ -404,7 +404,7 @@ class Message:
         return hash('%s/%s' % (self.package_name, self.message_name))
 
     def __str__(self):
-        return self.prefix_path + ':' + self.package_name + ':' + self.message_name
+        return f"{self.prefix_path}:{self.package_name}:{self.message_name}"
 
     def __repr__(self):
         return self.__str__()
