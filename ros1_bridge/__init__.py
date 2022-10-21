@@ -221,11 +221,20 @@ def generate_messages(rospack=None):
     # order mappings topologically to allow template specialization
     ordered_mappings = []
     while mappings:
+        print(f"generate_messages: ")
+        print(f"generate_messages: ")
+        print(f"generate_messages: ")
+        print(f"generate_messages: -----------------------------------------------------------------------------------------")
+        print(f"generate_messages: There are {len(mappings)} mappings remaining and {len(ordered_mappings)} ordered_mappings")
         # pick first mapping without unsatisfied dependencies
         for m in mappings:
             if not m.depends_on_ros2_messages:
+                print(f"generate_messages: {m} does NOT depend on other ROS2 messages")
                 break
+            else:
+                print(f"generate_messages: {m} depends on other ROS2 messages")
         else:
+            print(f"generate_messages: Processed all mappings")
             break
         # move mapping to ordered list
         mappings.remove(m)
@@ -234,7 +243,10 @@ def generate_messages(rospack=None):
         # update unsatisfied dependencies of remaining mappings
         for m in mappings:
             if ros2_msg in m.depends_on_ros2_messages:
+                print(f"generate_messages: True: ros2_msg ({ros2_msg}) used in {m}: {m.depends_on_ros2_messages}")
                 m.depends_on_ros2_messages.remove(ros2_msg)
+            # else:
+            #     print(f"False: ros2_msg ({ros2_msg}) not in m.depends_on_ros2_messages ({m.depends_on_ros2_messages})")
 
     if mappings:
         print('%d mappings can not be generated due to missing dependencies:' % len(mappings),
@@ -1391,7 +1403,7 @@ class Mapping:
                 self.depends_on_ros2_messages.add(Message(pkg_name, msg_name))
     
     def __str__(self):
-        return f"Mapping({self.ros1_msg} <-> {self.ros2_msg}):\n\t1->2: {pprint.pformat(self.fields_1_to_2)},\n\t2->1: {pprint.pformat(self.fields_2_to_1)}"
+        return f"Mapping({self.ros1_msg} <-> {self.ros2_msg})"#:\n\t1->2: {pprint.pformat(self.fields_1_to_2)},\n\t2->1: {pprint.pformat(self.fields_2_to_1)}"
 
 def camel_case_to_lower_case_underscore(value):
     # insert an underscore before any upper case letter
