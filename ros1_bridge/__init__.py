@@ -251,6 +251,7 @@ def generate_messages(rospack=None):
     if mappings:
         print('%d mappings can not be generated due to missing dependencies:' % len(mappings),
               file=sys.stderr)
+        breakpoint()
         for m in mappings:
             print('- %s <-> %s:' %
                   ('%s/%s' % (m.ros1_msg.package_name, m.ros1_msg.message_name),
