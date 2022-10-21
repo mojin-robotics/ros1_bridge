@@ -1131,11 +1131,7 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                     break
             else:
                 # if fields from both sides are not mappable the whole message is not mappable
-                if debug: print("Field from both sides are not mappable, Early return 2")
-                if TODO: #  TODO field is not already in mapping
-                    pass
-                else:
-                    return None
+                return None
 
     if debug: print(f"determine_field_mapping: after processing: {mapping}")
     return mapping
