@@ -65,7 +65,7 @@ for package_path in reversed([p for p in rpp if p]):
             sys.path.insert(0, sys_path)
 import rosmsg  # noqa
 
-DEBUGGED_MSGS = ['ODEJointProperties'] #'UniqueID', 'OperationModeStatus']]
+DEBUGGED_MSGS = [] #'ODEJointProperties', 'UniqueID', 'OperationModeStatus']]
 
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
