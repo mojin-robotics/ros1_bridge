@@ -76,7 +76,7 @@ DEBUGGED_MSGS = ['ControllerState'] #'ODEJointProperties', 'UniqueID', 'Operatio
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
     data = generate_messages(rospack)
-    breakpoint()
+
     message_string_pairs = {
         (
             '%s/%s' % (m.ros1_msg.package_name, m.ros1_msg.message_name),
@@ -101,6 +101,8 @@ def generate_cpp(output_path, template_dir):
 
     template_file = os.path.join(template_dir, 'get_factory.cpp.em')
     output_file = os.path.join(output_path, 'get_factory.cpp')
+    print(f"generate_cpp: output_path: {output_path}")
+    # breakpoint()
     expand_template(template_file, data, output_file)
 
     for ros2_package_name in data['ros2_package_names']:
@@ -214,7 +216,7 @@ def generate_messages(rospack=None):
     for ros1_msg, ros2_msg in message_pairs:
         mapping = determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx)
         if ros1_msg.message_name in DEBUGGED_MSGS:
-            print(f"generate_messages: mapping {mapping}")
+            print(f"generate_messages: mapping for {ros1_msg.message_name}<->{ros2_msg.message_name}: {mapping}")
         if mapping:
             if ros1_msg.message_name in DEBUGGED_MSGS:
                 print(f"generate_messages: adding current mapping")
@@ -225,22 +227,24 @@ def generate_messages(rospack=None):
 
     # order mappings topologically to allow template specialization
     ordered_mappings = []
+
+    print(f"generate_messages: There are {len(mappings)} mappings remaining")
     while mappings:
-        print(f"generate_messages: ")
-        print(f"generate_messages: ")
-        print(f"generate_messages: ")
-        print(f"generate_messages: -----------------------------------------------------------------------------------------")
-        print(f"generate_messages: There are {len(mappings)} mappings remaining and {len(ordered_mappings)} ordered_mappings")
-        breakpoint()
+        # print(f"generate_messages: ")
+        # print(f"generate_messages: ")
+        # print(f"generate_messages: ")
+        # print(f"generate_messages: -----------------------------------------------------------------------------------------")
+        # print(f"generate_messages: There are {len(mappings)} mappings remaining and {len(ordered_mappings)} ordered_mappings")
         # pick first mapping without unsatisfied dependencies
         for m in mappings:
+            debug = m.ros1_msg.message_name in DEBUGGED_MSGS
             if not m.depends_on_ros2_messages:
-                print(f"generate_messages: {m} does NOT depend on other ROS2 messages")
+                if debug: print(f"generate_messages: {m} does NOT depend on other ROS2 messages")
                 break
             else:
-                print(f"generate_messages: {m} depends on other ROS2 messages")
+                if debug: print(f"generate_messages: {m} depends on other ROS2 messages")
         else:
-            print(f"generate_messages: Processed all mappings")
+            if debug: print(f"generate_messages: Processed all mappings")
             break
         # move mapping to ordered list
         mappings.remove(m)
@@ -248,8 +252,9 @@ def generate_messages(rospack=None):
         ros2_msg = m.ros2_msg
         # update unsatisfied dependencies of remaining mappings
         for m in mappings:
+            debug = m.ros1_msg.message_name in DEBUGGED_MSGS
             if ros2_msg in m.depends_on_ros2_messages:
-                print(f"generate_messages: True: ros2_msg ({ros2_msg}) used in {m}: {m.depends_on_ros2_messages}")
+                if debug: print(f"generate_messages: True: ros2_msg ({ros2_msg}) used in {m}: {m.depends_on_ros2_messages}")
                 m.depends_on_ros2_messages.remove(ros2_msg)
             # else:
             #     print(f"False: ros2_msg ({ros2_msg}) not in m.depends_on_ros2_messages ({m.depends_on_ros2_messages})")
@@ -266,6 +271,15 @@ def generate_messages(rospack=None):
                 print('  -', '%s/%s' %
                       (d.package_name, d.message_name), file=sys.stderr)
         print(file=sys.stderr)
+
+    ros1_msgs = [m.ros1_msg for m in ordered_mappings]
+    print(f"generate_messages: ordered_mappings:")
+    pprint.pprint(ros1_msgs)
+    ros1_msg_names = [m.ros1_msg.message_name for m in ordered_mappings]
+    if set(ros1_msg_names).issuperset(set(DEBUGGED_MSGS)):
+        print(f"{DEBUGGED_MSGS} are in ordered_mappings")
+    else:
+        print(f"{DEBUGGED_MSGS} are NOT in ordered_mappings")
 
     return {
         'ros1_msgs': [m.ros1_msg for m in ordered_mappings],
