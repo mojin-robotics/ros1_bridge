@@ -214,9 +214,14 @@ def generate_messages(rospack=None):
     for ros1_msg, ros2_msg in message_pairs:
         mapping = determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx)
         if ros1_msg.message_name in DEBUGGED_MSGS:
-            print(mapping)
+            print(f"generate_messages: mapping {mapping}")
         if mapping:
+            if ros1_msg.message_name in DEBUGGED_MSGS:
+                print(f"generate_messages: adding current mapping")
             mappings.append(mapping)
+        else:
+            if ros1_msg.message_name in DEBUGGED_MSGS:
+                print(f"generate_messages: ignoring current mapping")
 
     # order mappings topologically to allow template specialization
     ordered_mappings = []
@@ -1119,7 +1124,7 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
     
     ros1_field_missing_in_ros2 = any(ros1_fields_not_mapped)
     
-    if debug: print(f"determine_field_mapping: ros1_field_missing_in_ros2={ros1_field_missing_in_ros2}")
+    if debug: print(f"determine_field_mapping: ros1_field_missing_in_ros2={ros1_field_missing_in_ros2} (ros1_fields_not_mapped: {ros1_fields_not_mapped}")
 
     if ros1_field_missing_in_ros2:
         # if some fields exist in ROS 1 but not in ROS 2
