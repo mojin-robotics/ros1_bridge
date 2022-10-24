@@ -71,12 +71,12 @@ for package_path in reversed([p for p in rpp if p]):
             sys.path.insert(0, sys_path)
 import rosmsg  # noqa
 
-DEBUGGED_MSGS = [] #'ODEJointProperties', 'UniqueID', 'OperationModeStatus']]
+DEBUGGED_MSGS = ['ControllerState'] #'ODEJointProperties', 'UniqueID', 'OperationModeStatus']]
 
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
     data = generate_messages(rospack)
-    # breakpoint()
+    breakpoint()
     message_string_pairs = {
         (
             '%s/%s' % (m.ros1_msg.package_name, m.ros1_msg.message_name),
@@ -231,6 +231,7 @@ def generate_messages(rospack=None):
         print(f"generate_messages: ")
         print(f"generate_messages: -----------------------------------------------------------------------------------------")
         print(f"generate_messages: There are {len(mappings)} mappings remaining and {len(ordered_mappings)} ordered_mappings")
+        breakpoint()
         # pick first mapping without unsatisfied dependencies
         for m in mappings:
             if not m.depends_on_ros2_messages:
