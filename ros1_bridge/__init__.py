@@ -466,7 +466,8 @@ def get_ros2_actions():
                         'ros1_service_name', 'ros2_service_name'))):
                     try:
                         rules.append(ActionMappingRule(data, package_name))
-                    except Exception as e:
+                    # MappingRule raises a plain Exception, a custom exception could be better
+                    except Exception as e:  # noqa: B902
                         print('%s' % str(e), file=sys.stderr)
     return pkgs, actions, rules
 
