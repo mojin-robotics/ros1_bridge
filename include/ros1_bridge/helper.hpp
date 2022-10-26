@@ -17,6 +17,9 @@
 
 #include <xmlrpcpp/XmlRpcException.h>
 
+#include <list>
+#include <string>
+
 // include ROS 1
 #ifdef __clang__
 # pragma clang diagnostic push
@@ -35,9 +38,6 @@
 // include ROS 2
 #include "rclcpp/rclcpp.hpp"
 #include "rcpputils/scope_exit.hpp"
-
-#include <list>
-#include <string>
 
 #include "ros1_bridge/bridge.hpp"
 
