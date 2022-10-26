@@ -71,6 +71,10 @@ for package_path in reversed([p for p in rpp if p]):
 import rosmsg  # noqa
 
 
+class MappingException(Exception):
+    pass
+
+
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
     data = generate_messages(rospack)
@@ -336,7 +340,7 @@ def get_ros2_messages():
                 if all(n not in data for n in ('ros1_service_name', 'ros2_service_name')):
                     try:
                         rules.append(MessageMappingRule(data, package_name))
-                    except Exception as e:  # noqa: B902
+                    except MappingException as e:
                         print('%s' % str(e), file=sys.stderr)
     return pkgs, msgs, rules
 
@@ -399,7 +403,7 @@ def get_ros2_services():
                 if all(n not in data for n in ('ros1_message_name', 'ros2_message_name')):
                     try:
                         rules.append(ServiceMappingRule(data, package_name))
-                    except Exception as e:  # noqa: B902
+                    except MappingException as e:
                         print('%s' % str(e), file=sys.stderr)
     return pkgs, srvs, rules
 
@@ -466,8 +470,7 @@ def get_ros2_actions():
                         'ros1_service_name', 'ros2_service_name'))):
                     try:
                         rules.append(ActionMappingRule(data, package_name))
-                    # MappingRule raises a plain Exception, a custom exception could be better
-                    except Exception as e:  # noqa: B902
+                    except MappingException as e:
                         print('%s' % str(e), file=sys.stderr)
     return pkgs, actions, rules
 
@@ -510,7 +513,7 @@ class MappingRule:
         if all(n in data for n in ('ros1_package_name', 'ros2_package_name')):
             if (data['ros2_package_name'] != expected_package_name
                     and not data.get('enable_foreign_mappings')):
-                raise Exception(
+                raise MappingException(
                     ('Ignoring rule which affects a different ROS 2 package (%s) '
                      'then the one it is defined in (%s)\n\n'
                      '(Please set `enable_foreign_mappings` to `true` if '
@@ -524,7 +527,7 @@ class MappingRule:
                 len(data) == (2 + int('enable_foreign_mappings' in data))
             )
         else:
-            raise Exception(
+            raise MappingException(
                 'Ignoring a rule without a ros1_package_name and/or ros2_package_name')
 
     def is_package_mapping(self):
