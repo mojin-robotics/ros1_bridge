@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <cstring>
 #include <map>
 #include <memory>
@@ -19,7 +21,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <boost/algorithm/string/predicate.hpp>
 
 #include "ros1_bridge/helper.hpp"
 #include "ros1_bridge/action_factory.hpp"
@@ -33,7 +34,8 @@ bool parse_command_options(
 {
   std::vector<std::string> args(argv, argv + argc);
 
-  if (ros1_bridge::find_command_option(args, "-h") || ros1_bridge::find_command_option(args, "--help")) {
+  if (ros1_bridge::find_command_option(args, "-h")
+      || ros1_bridge::find_command_option(args, "--help")) {
     std::stringstream ss;
     ss << "Usage:" << std::endl;
     ss << " -h, --help: This message." << std::endl;
@@ -87,8 +89,10 @@ bool parse_command_options(
   output_topic_introspection = ros1_bridge::get_flag_option(args, "--show-introspection");
 
   bool bridge_all_topics = ros1_bridge::get_flag_option(args, "--bridge-all-topics");
-  bridge_all_1to2_topics = bridge_all_topics || ros1_bridge::get_flag_option(args, "--bridge-all-1to2-topics");
-  bridge_all_2to1_topics = bridge_all_topics || ros1_bridge::get_flag_option(args, "--bridge-all-2to1-topics");
+  bridge_all_1to2_topics = bridge_all_topics
+                           || ros1_bridge::get_flag_option(args, "--bridge-all-1to2-topics");
+  bridge_all_2to1_topics = bridge_all_topics
+                           || ros1_bridge::get_flag_option(args, "--bridge-all-2to1-topics");
   multi_threads = ros1_bridge::get_flag_option(args, "--multi-threads");
 
   return true;
@@ -728,7 +732,8 @@ int main(int argc, char * argv[])
       ros1_bridge::get_ros1_services(payload, active_ros1_services);
 
       // check actions
-      std::map<std::string, std::map<std::string, std::string>> active_ros1_action_servers, active_ros1_action_clients;
+      std::map<std::string, std::map<std::string, std::string>>
+        active_ros1_action_servers, active_ros1_action_clients;
       get_active_ros1_actions(
         current_ros1_publishers, current_ros1_subscribers,
         active_ros1_action_servers, active_ros1_action_clients);
