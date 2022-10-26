@@ -19,6 +19,11 @@
 
 #include <list>
 #include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <utility>
+
 
 // include ROS 1
 #ifdef __clang__
@@ -276,7 +281,8 @@ bool get_ros1_master_system_state(XmlRpc::XmlRpcValue &payload)
   return true;
 }
 
-bool get_ros1_active_publishers(const XmlRpc::XmlRpcValue &payload, std::set<std::string> &active_publishers)
+bool get_ros1_active_publishers(const XmlRpc::XmlRpcValue &payload,
+                                std::set<std::string> &active_publishers)
 {
   // check publishers
   if (payload.size() >= 1) {
@@ -296,7 +302,8 @@ bool get_ros1_active_publishers(const XmlRpc::XmlRpcValue &payload, std::set<std
   return true;
 }
 
-bool get_ros1_active_subscribers(const XmlRpc::XmlRpcValue &payload, std::set<std::string> &active_subscribers)
+bool get_ros1_active_subscribers(const XmlRpc::XmlRpcValue &payload,
+                                 std::set<std::string> &active_subscribers)
 {
   // check subscribers
   if (payload.size() >= 2) {
@@ -443,7 +450,8 @@ bool get_ros1_current_topics(const std::set<std::string> &active_publishers,
 }
 
 // check services
-bool get_ros1_services(const XmlRpc::XmlRpcValue &payload, std::map<std::string, std::map<std::string, std::string>> &ros1_services)
+bool get_ros1_services(const XmlRpc::XmlRpcValue &payload,
+                       std::map<std::string, std::map<std::string, std::string>> &ros1_services)
 {
   if (payload.size() >= 3) {
     for (int j = 0; j < payload[2].size(); ++j) {
@@ -462,7 +470,7 @@ void get_ros2_current_topics(rclcpp::Node::SharedPtr ros2_node,
                             std::map<std::string, Bridge1to2HandlesAndMessageTypes>& bridges_1to2,
                             std::map<std::string, Bridge2to1HandlesAndMessageTypes>& bridges_2to1,
                             std::set<std::string> &already_ignored_topics,
-                            bool output_topic_introspection=false)
+                            bool output_topic_introspection = false)
 {
   auto ros2_topics = ros2_node->get_topic_names_and_types();
 
@@ -532,7 +540,8 @@ void get_ros2_current_topics(rclcpp::Node::SharedPtr ros2_node,
 }
 
 void get_ros2_services(rclcpp::Node::SharedPtr ros2_node,
-                        std::map<std::string, std::map<std::string, std::string>> &active_ros2_services,
+                        std::map<std::string, std::map<std::string, std::string>>
+                          &active_ros2_services,
                         std::set<std::string>& already_ignored_services)
 {
   // collect available services (not clients)
@@ -590,6 +599,6 @@ void get_ros2_services(rclcpp::Node::SharedPtr ros2_node,
     }
   }
 }
-} //namespace ros1_bridge
+}  // namespace ros1_bridge
 
 #endif  // ROS1_BRIDGE__HELPER_HPP_
