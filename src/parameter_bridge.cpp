@@ -17,6 +17,9 @@
 #include <memory>
 #include <list>
 #include <string>
+#include <vector>
+#include <map>
+#include <set>
 
 #include "ros1_bridge/helper.hpp"
 
@@ -27,7 +30,8 @@ bool parse_command_options(
 {
   std::vector<std::string> args(argv, argv + argc);
 
-  if (ros1_bridge::find_command_option(args, "-h") || ros1_bridge::find_command_option(args, "--help")) {
+  if (ros1_bridge::find_command_option(args, "-h")
+      || ros1_bridge::find_command_option(args, "--help")) {
     std::stringstream ss;
     ss << "Usage:" << std::endl;
     ss << " -h, --help: This message." << std::endl;
@@ -90,9 +94,10 @@ void update_services(
                 fprintf(stderr, "Failed to created a bridge: %s\n", e.what());
               }
             }
-          }
-          else {
-            fprintf(stderr, "Failed to created a bridge for service %s. types differ\n", name.c_str());
+          } else {
+            fprintf(stderr,
+                    "Failed to created a bridge for service %s. types differ\n",
+                    name.c_str());
           }
         }
       }
@@ -110,7 +115,7 @@ void update_services(
     services_1_to_2.getType() == XmlRpc::XmlRpcValue::TypeArray)
   {
     for (size_t i = 0; i < static_cast<size_t>(services_1_to_2.size()); ++i) {
-      //first check if this service is already in the map saved
+      // first check if this service is already in the map saved
 
       std::string service_name = static_cast<std::string>(services_1_to_2[i]["service"]);
       std::string service_type = static_cast<std::string>(services_1_to_2[i]["type"]);
@@ -141,9 +146,10 @@ void update_services(
                 fprintf(stderr, "Failed to created a bridge: %s\n", e.what());
               }
             }
-          }
-          else {
-            fprintf(stderr, "Failed to created a bridge for service %s. types differ\n", name.c_str());
+          } else {
+            fprintf(stderr,
+                    "Failed to created a bridge for service %s. types differ\n",
+                    name.c_str());
           }
         }
       }
