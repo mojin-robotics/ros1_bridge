@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
+#ifndef ROS1_BRIDGE__HELPER_HPP_
+#define ROS1_BRIDGE__HELPER_HPP_
 
 #include <xmlrpcpp/XmlRpcException.h>
 
@@ -591,3 +591,5 @@ void get_ros2_services(rclcpp::Node::SharedPtr ros2_node,
   }
 }
 } //namespace ros1_bridge
+
+#endif  // ROS1_BRIDGE__HELPER_HPP_
