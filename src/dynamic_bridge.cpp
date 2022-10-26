@@ -34,8 +34,9 @@ bool parse_command_options(
 {
   std::vector<std::string> args(argv, argv + argc);
 
-  if (ros1_bridge::find_command_option(args, "-h")
-      || ros1_bridge::find_command_option(args, "--help")) {
+  if (ros1_bridge::find_command_option(args, "-h") ||
+    ros1_bridge::find_command_option(args, "--help"))
+  {
     std::stringstream ss;
     ss << "Usage:" << std::endl;
     ss << " -h, --help: This message." << std::endl;
@@ -89,10 +90,10 @@ bool parse_command_options(
   output_topic_introspection = ros1_bridge::get_flag_option(args, "--show-introspection");
 
   bool bridge_all_topics = ros1_bridge::get_flag_option(args, "--bridge-all-topics");
-  bridge_all_1to2_topics = bridge_all_topics
-                           || ros1_bridge::get_flag_option(args, "--bridge-all-1to2-topics");
-  bridge_all_2to1_topics = bridge_all_topics
-                           || ros1_bridge::get_flag_option(args, "--bridge-all-2to1-topics");
+  bridge_all_1to2_topics = bridge_all_topics ||
+    ros1_bridge::get_flag_option(args, "--bridge-all-1to2-topics");
+  bridge_all_2to1_topics = bridge_all_topics ||
+    ros1_bridge::get_flag_option(args, "--bridge-all-2to1-topics");
   multi_threads = ros1_bridge::get_flag_option(args, "--multi-threads");
 
   return true;
@@ -720,20 +721,21 @@ int main(int argc, char * argv[])
       std::map<std::string, std::map<std::string, std::string>> active_ros1_services;
 
       XmlRpc::XmlRpcValue payload;
-      if(!ros1_bridge::get_ros1_master_system_state(payload)) {
+      if (!ros1_bridge::get_ros1_master_system_state(payload)) {
         return;
       }
 
       ros1_bridge::get_ros1_active_publishers(payload, active_publishers);
       ros1_bridge::get_ros1_active_subscribers(payload, active_subscribers);
-      ros1_bridge::get_ros1_current_topics(active_publishers, active_subscribers,
-                                          current_ros1_publishers, current_ros1_subscribers,
-                                          output_topic_introspection);
+      ros1_bridge::get_ros1_current_topics(
+        active_publishers, active_subscribers,
+        current_ros1_publishers, current_ros1_subscribers,
+        output_topic_introspection);
       ros1_bridge::get_ros1_services(payload, active_ros1_services);
 
       // check actions
       std::map<std::string, std::map<std::string, std::string>>
-        active_ros1_action_servers, active_ros1_action_clients;
+      active_ros1_action_servers, active_ros1_action_clients;
       get_active_ros1_actions(
         current_ros1_publishers, current_ros1_subscribers,
         active_ros1_action_servers, active_ros1_action_clients);
@@ -797,10 +799,11 @@ int main(int argc, char * argv[])
       std::map<std::string, std::string> current_ros2_subscribers;
       std::map<std::string, std::map<std::string, std::string>> active_ros2_services;
 
-      ros1_bridge::get_ros2_current_topics(ros2_node,
-                                            current_ros2_publishers, current_ros2_subscribers,
-                                            bridges_1to2, bridges_2to1,
-                                            already_ignored_topics, output_topic_introspection);
+      ros1_bridge::get_ros2_current_topics(
+        ros2_node,
+        current_ros2_publishers, current_ros2_subscribers,
+        bridges_1to2, bridges_2to1,
+        already_ignored_topics, output_topic_introspection);
       ros1_bridge::get_ros2_services(ros2_node, active_ros2_services, already_ignored_services);
 
       std::map<std::string, std::map<std::string, std::string>> active_ros2_action_servers,
