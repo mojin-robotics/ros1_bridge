@@ -394,7 +394,7 @@ private:
 
   std::size_t get_goal_id_hash(const rclcpp_action::GoalUUID & uuid)
   {
-    return std::hash<rclcpp_action::GoalUUID>{}(uuid);
+    return std::hash<rclcpp_action::GoalUUID>{} (uuid);
   }
 
   ros::NodeHandle ros1_node_;

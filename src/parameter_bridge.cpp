@@ -17,17 +17,22 @@
 #include <memory>
 #include <list>
 #include <string>
+#include <vector>
+#include <map>
+#include <set>
 
 #include "ros1_bridge/helper.hpp"
 
 std::mutex g_bridge_mutex;
 
 bool parse_command_options(
-  int argc, char ** argv, bool &multi_threads)
+  int argc, char ** argv, bool & multi_threads)
 {
   std::vector<std::string> args(argv, argv + argc);
 
-  if (ros1_bridge::find_command_option(args, "-h") || ros1_bridge::find_command_option(args, "--help")) {
+  if (ros1_bridge::find_command_option(args, "-h") ||
+    ros1_bridge::find_command_option(args, "--help"))
+  {
     std::stringstream ss;
     ss << "Usage:" << std::endl;
     ss << " -h, --help: This message." << std::endl;
@@ -72,13 +77,12 @@ void update_services(
           service_bridges_2_to_1.find(name) == service_bridges_2_to_1.end() &&
           service_bridges_1_to_2.find(name) == service_bridges_1_to_2.end())
         {
-          if(name != service_name)
-          {
+          if (name != service_name) {
             continue;
           }
           std::stringstream ss;
           ss << details.at("package") << "/" << details.at("name");
-          if(service_type == ss.str()) {
+          if (service_type == ss.str()) {
             auto factory = ros1_bridge::get_service_factory(
               "ros1", details.at("package"), details.at("name"));
             if (factory) {
@@ -90,9 +94,11 @@ void update_services(
                 fprintf(stderr, "Failed to created a bridge: %s\n", e.what());
               }
             }
-          }
-          else {
-            fprintf(stderr, "Failed to created a bridge for service %s. types differ\n", name.c_str());
+          } else {
+            fprintf(
+              stderr,
+              "Failed to created a bridge for service %s. types differ\n",
+              name.c_str());
           }
         }
       }
@@ -110,7 +116,7 @@ void update_services(
     services_1_to_2.getType() == XmlRpc::XmlRpcValue::TypeArray)
   {
     for (size_t i = 0; i < static_cast<size_t>(services_1_to_2.size()); ++i) {
-      //first check if this service is already in the map saved
+      // first check if this service is already in the map saved
 
       std::string service_name = static_cast<std::string>(services_1_to_2[i]["service"]);
       std::string service_type = static_cast<std::string>(services_1_to_2[i]["type"]);
@@ -123,13 +129,12 @@ void update_services(
           service_bridges_1_to_2.find(name) == service_bridges_1_to_2.end() &&
           service_bridges_2_to_1.find(name) == service_bridges_2_to_1.end())
         {
-          if(name != service_name)
-          {
+          if (name != service_name) {
             continue;
           }
           std::stringstream ss;
           ss << details.at("package") << "/" << details.at("name");
-          if(service_type == ss.str()) {
+          if (service_type == ss.str()) {
             auto factory = ros1_bridge::get_service_factory(
               "ros2", details.at("package"), details.at("name"));
             if (factory) {
@@ -141,9 +146,11 @@ void update_services(
                 fprintf(stderr, "Failed to created a bridge: %s\n", e.what());
               }
             }
-          }
-          else {
-            fprintf(stderr, "Failed to created a bridge for service %s. types differ\n", name.c_str());
+          } else {
+            fprintf(
+              stderr,
+              "Failed to created a bridge for service %s. types differ\n",
+              name.c_str());
           }
         }
       }
@@ -184,8 +191,9 @@ int main(int argc, char * argv[])
 {
   bool multi_threads;
 
-  if (!parse_command_options(argc, argv, multi_threads))
+  if (!parse_command_options(argc, argv, multi_threads)) {
     return 0;
+  }
 
   // ROS 2 node
   rclcpp::init(argc, argv);
@@ -291,7 +299,7 @@ int main(int argc, char * argv[])
       std::map<std::string, std::map<std::string, std::string>> active_ros1_services;
 
       XmlRpc::XmlRpcValue payload;
-      if(!ros1_bridge::get_ros1_master_system_state(payload)) {
+      if (!ros1_bridge::get_ros1_master_system_state(payload)) {
         return;
       }
 
@@ -341,10 +349,10 @@ int main(int argc, char * argv[])
     };
 
   auto check_ros1_flag = [&ros1_node] {
-    if (!ros1_node.ok()) {
-      rclcpp::shutdown();
-    }
-  };
+      if (!ros1_node.ok()) {
+        rclcpp::shutdown();
+      }
+    };
 
   auto ros2_poll_timer = ros2_node->create_wall_timer(
     std::chrono::seconds(1), [&ros2_poll, &check_ros1_flag] {

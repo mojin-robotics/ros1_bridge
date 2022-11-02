@@ -71,6 +71,10 @@ for package_path in reversed([p for p in rpp if p]):
 import rosmsg  # noqa
 
 
+class MappingException(Exception):
+    pass
+
+
 def generate_cpp(output_path, template_dir):
     rospack = rospkg.RosPack()
     data = generate_messages(rospack)
@@ -336,7 +340,7 @@ def get_ros2_messages():
                 if all(n not in data for n in ('ros1_service_name', 'ros2_service_name')):
                     try:
                         rules.append(MessageMappingRule(data, package_name))
-                    except Exception as e:  # noqa: B902
+                    except MappingException as e:
                         print('%s' % str(e), file=sys.stderr)
     return pkgs, msgs, rules
 
@@ -399,7 +403,7 @@ def get_ros2_services():
                 if all(n not in data for n in ('ros1_message_name', 'ros2_message_name')):
                     try:
                         rules.append(ServiceMappingRule(data, package_name))
-                    except Exception as e:  # noqa: B902
+                    except MappingException as e:
                         print('%s' % str(e), file=sys.stderr)
     return pkgs, srvs, rules
 
@@ -466,7 +470,7 @@ def get_ros2_actions():
                         'ros1_service_name', 'ros2_service_name'))):
                     try:
                         rules.append(ActionMappingRule(data, package_name))
-                    except Exception as e:
+                    except MappingException as e:
                         print('%s' % str(e), file=sys.stderr)
     return pkgs, actions, rules
 
@@ -509,7 +513,7 @@ class MappingRule:
         if all(n in data for n in ('ros1_package_name', 'ros2_package_name')):
             if (data['ros2_package_name'] != expected_package_name
                     and not data.get('enable_foreign_mappings')):
-                raise Exception(
+                raise MappingException(
                     ('Ignoring rule which affects a different ROS 2 package (%s) '
                      'then the one it is defined in (%s)\n\n'
                      '(Please set `enable_foreign_mappings` to `true` if '
@@ -523,7 +527,7 @@ class MappingRule:
                 len(data) == (2 + int('enable_foreign_mappings' in data))
             )
         else:
-            raise Exception(
+            raise MappingException(
                 'Ignoring a rule without a ros1_package_name and/or ros2_package_name')
 
     def is_package_mapping(self):
@@ -1054,6 +1058,7 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
     # apply name based mapping of fields
     ros1_field_missing_in_ros2 = False
 
+    ros1_fields_not_mapped = []
     for ros1_field in ros1_spec.parsed_fields():
         for ros2_member in ros2_spec.structure.members:
             if ros1_field.name.lower() == ros2_member.name:
@@ -1061,9 +1066,15 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
                 update_ros1_field_information(ros1_field, ros1_msg.package_name)
                 mapping.add_field_pair(ros1_field, ros2_member)
                 break
-        else:
+
+        ros1_fields_mapped_to_a_ros2_member = [field[0].name
+                                               for field
+                                               in mapping.fields_1_to_2.keys()]
+        if ros1_field.name not in ros1_fields_mapped_to_a_ros2_member:
             # this allows fields to exist in ROS 1 but not in ROS 2
-            ros1_field_missing_in_ros2 = True
+            ros1_fields_not_mapped += [ros1_field]
+
+    ros1_field_missing_in_ros2 = any(ros1_fields_not_mapped)
 
     if ros1_field_missing_in_ros2:
         # if some fields exist in ROS 1 but not in ROS 2
