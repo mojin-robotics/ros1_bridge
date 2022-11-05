@@ -337,7 +337,7 @@ def get_ros2_messages():
                     file=sys.stderr)
                 continue
             for data in content:
-                if all(n not in data for n in ('ros1_service_name', 'ros2_service_name')):
+                if all(n not in data for n in ('ros1_service_name', 'ros2_service_name', 'ros1_action_name', 'ros2_action_name')):
                     try:
                         rules.append(MessageMappingRule(data, package_name))
                     except MappingException as e:
@@ -400,7 +400,7 @@ def get_ros2_services():
                     file=sys.stderr)
                 continue
             for data in content:
-                if all(n not in data for n in ('ros1_message_name', 'ros2_message_name')):
+                if all(n not in data for n in ('ros1_message_name', 'ros2_message_name', 'ros1_action_name', 'ros2_action_name')):
                     try:
                         rules.append(ServiceMappingRule(data, package_name))
                     except MappingException as e:
@@ -466,8 +466,7 @@ def get_ros2_actions():
                     file=sys.stderr)
                 continue
             for data in content:
-                if (all(n not in data for n in ('ros1_message_name', 'ros2_message_name',
-                        'ros1_service_name', 'ros2_service_name'))):
+                if (all(n not in data for n in ('ros1_message_name', 'ros2_message_name', 'ros1_service_name', 'ros2_service_name'))):
                     try:
                         rules.append(ActionMappingRule(data, package_name))
                     except MappingException as e:
