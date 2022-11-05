@@ -564,10 +564,10 @@ class MessageMappingRule(MappingRule):
                         self.fields_1_to_2[ros1_field_name] = ros2_field_name
             elif len(data) > 4 + int('enable_foreign_mappings' in data):
                 raise RuntimeError(
-                    'Mapping for package %s contains unknown field(s)' % self.ros2_package_name)
+                    f'MessageMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
         elif len(data) > 2 + int('enable_foreign_mappings' in data):
             raise RuntimeError(
-                'Mapping for package %s contains unknown field(s)' % self.ros2_package_name)
+                f'MessageMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
 
     def is_message_mapping(self):
         return self.ros1_message_name is not None
@@ -609,10 +609,10 @@ class ServiceMappingRule(MappingRule):
                 expected_keys += 1
             elif len(data) > expected_keys + int('enable_foreign_mappings' in data):
                 raise RuntimeError(
-                    'Mapping for package %s contains unknown field(s)' % self.ros2_package_name)
+                    f'ServiceMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
         elif len(data) > 2 + int('enable_foreign_mappings' in data):
             raise RuntimeError(
-                'Mapping for package %s contains unknown field(s)' % self.ros2_package_name)
+                f'ServiceMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
 
     def __str__(self):
         return 'ServiceMappingRule(%s <-> %s)' % (self.ros1_package_name, self.ros2_package_name)
@@ -655,10 +655,10 @@ class ActionMappingRule(MappingRule):
                 expected_keys += 1
             elif len(data) > expected_keys:
                 raise RuntimeError(
-                    'Mapping for package %s contains unknown field(s)' % self.ros2_package_name)
+                    f'ActionMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
         elif len(data) > 2:
             raise RuntimeError(
-                'Mapping for package %s contains unknown field(s)' % self.ros2_package_name)
+                f'ActionMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
 
     def __str__(self):
         return 'ActionMappingRule(%s, %s)' % (self.ros1_package_name, self.ros2_package_name)
