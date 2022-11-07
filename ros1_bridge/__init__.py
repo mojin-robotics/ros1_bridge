@@ -656,7 +656,7 @@ class ActionMappingRule(MappingRule):
             elif len(data) > expected_keys:
                 raise RuntimeError(
                     f'ActionMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
-        elif len(data) > 2:
+        elif len(data) > 2 + int('enable_foreign_mappings' in data):
             raise RuntimeError(
                 f'ActionMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
 
