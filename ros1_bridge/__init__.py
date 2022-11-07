@@ -337,7 +337,10 @@ def get_ros2_messages():
                     file=sys.stderr)
                 continue
             for data in content:
-                if all(n not in data for n in ('ros1_service_name', 'ros2_service_name', 'ros1_action_name', 'ros2_action_name')):
+                if all(n not in data for n in ('ros1_service_name',
+                                               'ros2_service_name',
+                                               'ros1_action_name',
+                                               'ros2_action_name')):
                     try:
                         rules.append(MessageMappingRule(data, package_name))
                     except MappingException as e:
@@ -400,7 +403,10 @@ def get_ros2_services():
                     file=sys.stderr)
                 continue
             for data in content:
-                if all(n not in data for n in ('ros1_message_name', 'ros2_message_name', 'ros1_action_name', 'ros2_action_name')):
+                if all(n not in data for n in ('ros1_message_name',
+                                               'ros2_message_name',
+                                               'ros1_action_name',
+                                               'ros2_action_name')):
                     try:
                         rules.append(ServiceMappingRule(data, package_name))
                     except MappingException as e:
@@ -466,7 +472,10 @@ def get_ros2_actions():
                     file=sys.stderr)
                 continue
             for data in content:
-                if (all(n not in data for n in ('ros1_message_name', 'ros2_message_name', 'ros1_service_name', 'ros2_service_name'))):
+                if (all(n not in data for n in ('ros1_message_name',
+                                                'ros2_message_name',
+                                                'ros1_service_name',
+                                                'ros2_service_name'))):
                     try:
                         rules.append(ActionMappingRule(data, package_name))
                     except MappingException as e:
@@ -564,10 +573,12 @@ class MessageMappingRule(MappingRule):
                         self.fields_1_to_2[ros1_field_name] = ros2_field_name
             elif len(data) > 4 + int('enable_foreign_mappings' in data):
                 raise RuntimeError(
-                    f'MessageMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
+                    'MessageMappingRule: Mapping for package {} contains unknown field(s): {}'
+                    .format(self.ros2_package_name, data))
         elif len(data) > 2 + int('enable_foreign_mappings' in data):
             raise RuntimeError(
-                f'MessageMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
+                'MessageMappingRule: Mapping for package {} contains unknown field(s): {}'
+                .format(self.ros2_package_name, data))
 
     def is_message_mapping(self):
         return self.ros1_message_name is not None
@@ -609,10 +620,12 @@ class ServiceMappingRule(MappingRule):
                 expected_keys += 1
             elif len(data) > expected_keys + int('enable_foreign_mappings' in data):
                 raise RuntimeError(
-                    f'ServiceMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
+                    'ServiceMappingRule: Mapping for package {} contains unknown field(s): {}'
+                    .format(self.ros2_package_name, data))
         elif len(data) > 2 + int('enable_foreign_mappings' in data):
             raise RuntimeError(
-                f'ServiceMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
+                'ServiceMappingRule: Mapping for package {} contains unknown field(s): {}'
+                .format(self.ros2_package_name, data))
 
     def __str__(self):
         return 'ServiceMappingRule(%s <-> %s)' % (self.ros1_package_name, self.ros2_package_name)
@@ -655,10 +668,12 @@ class ActionMappingRule(MappingRule):
                 expected_keys += 1
             elif len(data) > expected_keys:
                 raise RuntimeError(
-                    f'ActionMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
+                    'ActionMappingRule: Mapping for package {} contains unknown field(s): {}'
+                    .format(self.ros2_package_name, data))
         elif len(data) > 2 + int('enable_foreign_mappings' in data):
             raise RuntimeError(
-                f'ActionMappingRule: Mapping for package {self.ros2_package_name} contains unknown field(s): {data}')
+                'ActionMappingRule: Mapping for package {} contains unknown field(s): {}'
+                .format(self.ros2_package_name, data))
 
     def __str__(self):
         return 'ActionMappingRule(%s, %s)' % (self.ros1_package_name, self.ros2_package_name)
