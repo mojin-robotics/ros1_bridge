@@ -1,0 +1,34 @@
+timeout: 240            # how long to wait for the host
+
+hosts:
+  localhost:                   # the hostname of the machine
+    os: linux           # the operating system of the host
+    user: $USER         # the user to be used
+    port: 22            # the port that is checked to determine if a service on the host already up
+                        # if port is not defined, the check is disabled
+    check_nfs: false    # wait for the nfs mount to be available on the localhost. If not defined
+                        # the check is disabled (only for linux os)
+
+sessions:
+  roscore:
+    host: localhost
+    user: $USER
+    command: "source_amr_ros1 && roscore"
+    prio: 0
+    locked: true
+    wait_for_core: false
+  server_ros2:
+    host: localhost
+    user: $USER
+    command: "source_amr_ros2 && cd ~/git/amr_ros2_interfaces_ws/src/ros1_bridge/scripts && ./ros2_action_server.py"
+    prio: 0
+  client_ros1:
+    host: localhost
+    user: $USER
+    command: "source_amr_ros1 && cd ~/git/amr_ros2_interfaces_ws/src/ros1_bridge/scripts && ./ros1_action_client.py"
+    prio: 0
+  ab_exec_tj:
+    host: localhost
+    user: $USER
+    command: "source_amr_ros_bridge && ros2 run ros1_bridge action_bridge ros2 action_tutorials_interfaces action/Fibonacci fibonacci"
+    prio: 2

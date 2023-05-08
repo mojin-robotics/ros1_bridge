@@ -40,9 +40,9 @@ class FibClient:
 
     def accept_feedback(self, feedback: FibonacciFeedback):
         rospy.loginfo(f"Got feedback: {feedback}")
-        if random.randint(0, 1):
-            rospy.loginfo("Randomly aborting")
-            self._ac.cancel_all_goals()
+        # if random.randint(0, 1):
+        #     rospy.loginfo("Randomly aborting")
+        #     self._ac.cancel_all_goals()
 
 if __name__ == '__main__':
     try:

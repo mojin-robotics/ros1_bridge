@@ -30,10 +30,10 @@ class FibonacciActionServer(Node):
                 feedback_msg.partial_sequence[i] + feedback_msg.partial_sequence[i-1])
             self.get_logger().info('Feedback: {0}'.format(feedback_msg.partial_sequence))
             goal_handle.publish_feedback(feedback_msg)
-            # time.sleep(0.001)
-            goal_handle.abort()
-            break
-            time.sleep(1)
+            time.sleep(0.1)
+            # goal_handle.abort()
+            # break
+            # time.sleep(1)
         # goal_handle.succeed()
 
         result = Fibonacci.Result()
