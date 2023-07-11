@@ -9,7 +9,7 @@ on:
 
 jobs:
   ros1_bridge:
-    runs-on: ubuntu:focal
+    runs-on: ubuntu-20.04
 
     strategy:
       fail-fast: false
