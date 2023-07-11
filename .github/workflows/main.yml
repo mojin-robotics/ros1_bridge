@@ -1,6 +1,11 @@
 name: CI
 
-on: [push, pull_request] # on all pushes and PRs
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 0 * * 0" # every Sunday at midnight
+  workflow_dispatch:
 
 jobs:
   ros1_bridge:
