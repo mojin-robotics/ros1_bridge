@@ -149,21 +149,47 @@ public:
       auto send_goal_ops = ROS2SendGoalOptions();
       send_goal_ops.goal_response_callback =
         [this, &gh2_future](std::shared_future<ROS2GoalHandle> gh2) mutable {
-          auto goal_handle = gh2_future.get();
-          if (!goal_handle) {
-            gh1_.setRejected();          // goal was not accepted by remote server
-            return;
-          }
-
-          gh1_.setAccepted();
-
-          {
-            std::lock_guard<std::mutex> lock(mutex_);
-            gh2_ = goal_handle;
-
-            if (canceled_) {          // cancel was called in between
-              auto fut = client_->async_cancel_goal(gh2_);
+          try {
+            // this is a workaround for the underlying actionlib implementation bug
+            // this callback function should never get called the the shared_future 
+            // is not ready/valid
+            int counter = 0;
+            while(!gh2_future.valid())
+            {
+              if( counter >= 10)
+              {
+                std::cout<<"std::shared_future not valid for more than 1.0 seconds. "
+                  "Rejecting action goal."<<std::endl;
+                gh1_.setRejected();
+                return;
+              }
+              std::cout<<"std::shared_future not valid. "
+                "This indicates a bug in the actionlib implementation. "
+                "goal_reponse_callback should only get called when the future is valid. "
+                "Waiting and retrying..."<<std::endl;
+              rclcpp::sleep_for(std::chrono::milliseconds(100));
+              counter++;
             }
+            auto goal_handle = gh2_future.get();
+            if (!goal_handle) {
+              gh1_.setRejected();          // goal was not accepted by remote server
+              return;
+            }
+
+            gh1_.setAccepted();
+
+            {
+              std::lock_guard<std::mutex> lock(mutex_);
+              gh2_ = goal_handle;
+
+              if (canceled_) {          // cancel was called in between
+                auto fut = client_->async_cancel_goal(gh2_);
+              }
+            }
+          } catch (const std::future_error& e) {
+            std::cout << "Caught a future_error with code \"" << e.code()
+                      << "\"\nMessage: \"" << e.what() << "\"\n";
+            throw;
           }
         };
 
