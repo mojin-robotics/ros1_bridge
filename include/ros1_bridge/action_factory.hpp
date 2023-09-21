@@ -156,15 +156,15 @@ private:
             {
               if( counter >= 10)
               {
-                std::cout<<"std::shared_future not valid for more than 1.0 seconds. "
-                  "Rejecting action goal."<<std::endl;
+                RCLCPP_ERROR(this->logger_, "std::shared_future not valid for more than 1.0 seconds. "
+                                            "Rejecting action goal.");
                 gh1_.setRejected();
                 return;
               }
-              std::cout<<"std::shared_future not valid. "
-                "This indicates a bug in the actionlib implementation. "
-                "goal_reponse_callback should only get called when the future is valid. "
-                "Waiting and retrying..."<<std::endl;
+              RCLCPP_WARN(this->logger_, "std::shared_future not valid. "
+                                          "This indicates a bug in the actionlib implementation. "
+                                          "goal_reponse_callback should only get called when the future is valid. "
+                                          "Waiting and retrying...");
               rclcpp::sleep_for(std::chrono::milliseconds(100));
               counter++;
             }
@@ -185,8 +185,8 @@ private:
               }
             }
           } catch (const std::future_error& e) {
-            std::cout << "Caught a future_error with code \"" << e.code()
-                      << "\"\nMessage: \"" << e.what() << "\"\n";
+            RCLCPP_ERROR_STREAM(this->logger_, "Caught a future_error with code '" << e.code()
+                      << "' Message: '" << e.what()<<"'");
             throw;
           }
         };
