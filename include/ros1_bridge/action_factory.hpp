@@ -100,7 +100,6 @@ public:
   void goal_cb(ROS1GoalHandle gh1)
   {
     const std::string goal_id = gh1.getGoalID().id;
-    RCLCPP_INFO(ros2_node_->get_logger(), "ActionFactory_1_2::goal_cb");
 
     // create a new handler for the goal
     std::shared_ptr<GoalHandler> handler;
@@ -151,22 +150,24 @@ public:
         [this, &gh2_future](std::shared_future<ROS2GoalHandle> gh2) mutable {
           try {
             // this is a workaround for the underlying actionlib implementation bug
-            // this callback function should never get called the the shared_future 
+            // this callback function should never get called the the shared_future
             // is not ready/valid
             int counter = 0;
-            while(!gh2_future.valid())
-            {
-              if( counter >= 10)
-              {
-                RCLCPP_ERROR(this->logger_, "std::shared_future not valid for more than 1.0 seconds. "
-                                            "Rejecting action goal.");
+            while (!gh2_future.valid()) {
+              if (counter >= 10) {
+                RCLCPP_ERROR(
+                  this->logger_,
+                  "std::shared_future not valid for more than 1.0 seconds. "
+                  "Rejecting action goal.");
                 gh1_.setRejected();
                 return;
               }
-              RCLCPP_WARN(this->logger_, "std::shared_future not valid. "
-                                          "This indicates a bug in the actionlib implementation. "
-                                          "goal_reponse_callback should only get called when the future is valid. "
-                                          "Waiting and retrying...");
+              RCLCPP_WARN(
+                this->logger_,
+                "std::shared_future not valid. "
+                "This indicates a bug in the actionlib implementation. "
+                "goal_reponse_callback should only get called when the future is valid. "
+                "Waiting and retrying...");
               rclcpp::sleep_for(std::chrono::milliseconds(100));
               counter++;
             }
@@ -186,9 +187,11 @@ public:
                 auto fut = client_->async_cancel_goal(gh2_);
               }
             }
-          } catch (const std::future_error& e) {
-            RCLCPP_ERROR_STREAM(this->logger_, "Caught a future_error with code '" << e.code()
-                      << "' Message: '" << e.what()<<"'");
+          } catch (const std::future_error & e) {
+            RCLCPP_ERROR_STREAM(
+              this->logger_,
+              "Caught a future_error with code '" << e.code() <<
+                "' Message: '" << e.what() << "'");
             throw;
           }
         };
