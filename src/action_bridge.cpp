@@ -17,7 +17,6 @@
 // include ROS 1
 #ifdef __clang__
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 #include "ros/ros.h"
 #ifdef __clang__
@@ -46,14 +45,12 @@ int main(int argc, char * argv[])
 
   std::cout << dir << " " << package << " " << type << " " << name << std::endl;
 
-  // ros1 example_tutorials Fibonacci fibonacci
 
   auto factory = ros1_bridge::get_action_factory(dir, package, type);
   if (factory) {
     printf("created action factory\n");
     try {
       factory->create_server_client(ros1_node, ros2_node, name);
-      // printf("Created 2 to 1 bridge for service %s\n", name.data());
     } catch (std::runtime_error & e) {
       fprintf(stderr, "Failed to created a bridge: %s\n", e.what());
     }

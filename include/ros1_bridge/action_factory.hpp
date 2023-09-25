@@ -27,7 +27,6 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 #include <actionlib/client/action_client.h>
 #include <actionlib/client/simple_action_client.h>  // Need this for the goal state. Need a better solution
@@ -91,6 +90,7 @@ public:
   {
     // try to find goal and cancel it
     std::lock_guard<std::mutex> lock(mutex_);
+    RCLCPP_INFO(ros2_node_->get_logger(), "ActionFactory_1_2::cancel_cb");
     auto it = goals_.find(gh1.getGoalID().id);
     if (it != goals_.end()) {
       std::thread([handler = it->second]() mutable {handler->cancel();}).detach();
@@ -103,11 +103,11 @@ public:
 
     // create a new handler for the goal
     std::shared_ptr<GoalHandler> handler;
-    handler.reset(new GoalHandler(gh1, client_));
+    handler = std::make_shared<GoalHandler>(gh1, client_, ros2_node_->get_logger());
     std::lock_guard<std::mutex> lock(mutex_);
     goals_.insert(std::make_pair(goal_id, handler));
 
-    RCLCPP_INFO(ros2_node_->get_logger(), "Sending goal");
+    RCLCPP_INFO(ros2_node_->get_logger(), "ActionFactory_1_2::goal_cb Sending goal");
     std::thread(
       [handler, goal_id, this]() mutable {
         // execute the goal remotely
@@ -131,6 +131,7 @@ public:
         auto fut = client_->async_cancel_goal(gh2_);
       }
     }
+
     void handle()
     {
       auto goal1 = gh1_.getGoal();
@@ -138,33 +139,60 @@ public:
       translate_goal_1_to_2(*gh1_.getGoal(), goal2);
 
       if (!client_->wait_for_action_server(std::chrono::seconds(1))) {
-        std::cout << "Action server not available after waiting" << std::endl;
+        RCLCPP_INFO(this->logger_, "Action server not available after waiting");
         gh1_.setRejected();
         return;
       }
 
-      // goal_response_callback signature changed after foxy, this implementation
-      // works with both
       std::shared_future<ROS2ClientGoalHandle> gh2_future;
-      // Changes as per Dashing
       auto send_goal_ops = ROS2SendGoalOptions();
       send_goal_ops.goal_response_callback =
         [this, &gh2_future](std::shared_future<ROS2GoalHandle> gh2) mutable {
-          auto goal_handle = gh2_future.get();
-          if (!goal_handle) {
-            gh1_.setRejected();          // goal was not accepted by remote server
-            return;
-          }
-
-          gh1_.setAccepted();
-
-          {
-            std::lock_guard<std::mutex> lock(mutex_);
-            gh2_ = goal_handle;
-
-            if (canceled_) {          // cancel was called in between
-              auto fut = client_->async_cancel_goal(gh2_);
+          try {
+            // this is a workaround for the underlying actionlib implementation bug
+            // this callback function should never get called the the shared_future
+            // is not ready/valid
+            int counter = 0;
+            while (!gh2_future.valid()) {
+              if (counter >= 10) {
+                RCLCPP_ERROR(
+                  this->logger_,
+                  "std::shared_future not valid for more than 1.0 seconds. "
+                  "Rejecting action goal.");
+                gh1_.setRejected();
+                return;
+              }
+              RCLCPP_WARN(
+                this->logger_,
+                "std::shared_future not valid. "
+                "This indicates a bug in the actionlib implementation. "
+                "goal_reponse_callback should only get called when the future is valid. "
+                "Waiting and retrying...");
+              rclcpp::sleep_for(std::chrono::milliseconds(100));
+              counter++;
             }
+            auto goal_handle = gh2_future.get();
+            if (!goal_handle) {
+              gh1_.setRejected();          // goal was not accepted by remote server
+              return;
+            }
+
+            gh1_.setAccepted();
+
+            {
+              std::lock_guard<std::mutex> lock(mutex_);
+              gh2_ = goal_handle;
+
+              if (canceled_) {          // cancel was called in between
+                auto fut = client_->async_cancel_goal(gh2_);
+              }
+            }
+          } catch (const std::future_error & e) {
+            RCLCPP_ERROR_STREAM(
+              this->logger_,
+              "Caught a future_error with code '" << e.code() <<
+                "' Message: '" << e.what() << "'");
+            throw;
           }
         };
 
@@ -193,13 +221,14 @@ public:
       }
     }
 
-    GoalHandler(ROS1GoalHandle & gh1, ROS2ClientSharedPtr & client)
-    : gh1_(gh1), gh2_(nullptr), client_(client), canceled_(false) {}
+    GoalHandler(ROS1GoalHandle & gh1, ROS2ClientSharedPtr & client, rclcpp::Logger logger)
+    : gh1_(gh1), gh2_(nullptr), client_(client), logger_(logger), canceled_(false) {}
 
 private:
     ROS1GoalHandle gh1_;
     ROS2ClientGoalHandle gh2_;
     ROS2ClientSharedPtr client_;
+    rclcpp::Logger logger_;
     bool canceled_;      // cancel was called
     std::mutex mutex_;
   };
@@ -272,7 +301,7 @@ public:
     (void)uuid;
     (void)goal;
     if (!client_->waitForActionServerToStart(ros::Duration(1))) {
-      std::cout << "Action server not available after waiting" << std::endl;
+      RCLCPP_INFO(ros2_node_->get_logger(), "Action server not available after waiting");
       return rclcpp_action::GoalResponse::REJECT;
     }
 
@@ -295,11 +324,11 @@ public:
   {
     std::size_t goal_id = get_goal_id_hash(gh2->get_goal_id());
     std::shared_ptr<GoalHandler> handler;
-    handler.reset(new GoalHandler(gh2, client_));
+    handler = std::make_shared<GoalHandler>(gh2, client_, ros2_node_->get_logger());
     std::lock_guard<std::mutex> lock(mutex_);
     goals_.insert(std::make_pair(goal_id, handler));
 
-    RCLCPP_INFO(ros2_node_->get_logger(), "Sending goal");
+    RCLCPP_INFO(ros2_node_->get_logger(), "ActionFactory_2_1::handle_accepted Sending goal");
     std::thread(
       [handler, goal_id, this]() mutable {
         // execute the goal remotely
@@ -344,7 +373,10 @@ public:
         [this, &result_ready,
         &cond_result](ROS1ClientGoalHandle goal_handle) mutable           // transition_cb
         {
-          ROS_INFO("Goal [%s]", goal_handle.getCommState().toString().c_str());
+          RCLCPP_INFO(
+            this->logger_,
+            "ActionFactory_2_1::handle Goal [%s]",
+            goal_handle.getCommState().toString().c_str());
           if (goal_handle.getCommState() == actionlib::CommState::RECALLING) {
             // cancelled before being processed
             auto result2 = std::make_shared<ROS2Result>();
@@ -357,7 +389,10 @@ public:
             auto result2 = std::make_shared<ROS2Result>();
             auto result1 = goal_handle.getResult();
             translate_result_1_to_2(*result2, *result1);
-            ROS_INFO("Goal [%s]", goal_handle.getTerminalState().toString().c_str());
+            RCLCPP_INFO(
+              this->logger_,
+              "ActionFactory_2_1::handle Goal [%s]",
+              goal_handle.getTerminalState().toString().c_str());
             if (goal_handle.getTerminalState() == actionlib::TerminalState::SUCCEEDED) {
               gh2_->succeed(result2);
             } else {
@@ -381,13 +416,17 @@ public:
       cond_result.wait(lck, [&result_ready] {return result_ready.load();});
     }
 
-    GoalHandler(std::shared_ptr<ROS2ServerGoalHandle> & gh2, std::shared_ptr<ROS1Client> & client)
-    : gh2_(gh2), client_(client), canceled_(false) {}
+    GoalHandler(
+      std::shared_ptr<ROS2ServerGoalHandle> & gh2,
+      std::shared_ptr<ROS1Client> & client,
+      rclcpp::Logger logger)
+    : gh2_(gh2), client_(client), logger_(logger), canceled_(false) {}
 
 private:
     std::shared_ptr<ROS1ClientGoalHandle> gh1_;
     std::shared_ptr<ROS2ServerGoalHandle> gh2_;
     std::shared_ptr<ROS1Client> client_;
+    rclcpp::Logger logger_;
     bool canceled_;      // cancel was called
     std::mutex mutex_;
   };
