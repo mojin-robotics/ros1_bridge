@@ -296,25 +296,29 @@ int main(int argc, char * argv[])
     service_execution_timeout, multi_threads
     ](const ros::TimerEvent &) -> void
     {
-      std::map<std::string, std::map<std::string, std::string>> active_ros1_services;
+      try {
+        std::map<std::string, std::map<std::string, std::string>> active_ros1_services;
 
-      XmlRpc::XmlRpcValue payload;
-      if (!ros1_bridge::get_ros1_master_system_state(payload)) {
-        return;
+        XmlRpc::XmlRpcValue payload;
+        if (!ros1_bridge::get_ros1_master_system_state(payload)) {
+          return;
+        }
+
+        ros1_bridge::get_ros1_services(payload, active_ros1_services);
+        {
+          std::lock_guard<std::mutex> lock(g_bridge_mutex);
+          ros1_services = active_ros1_services;
+        }
+
+        update_services(
+          ros1_node, ros2_node,
+          ros1_services, ros2_services,
+          service_bridges_1_to_2, service_bridges_2_to_1,
+          services_1_to_2_parameter_name, services_2_to_1_parameter_name,
+          service_execution_timeout, multi_threads);
+      } catch (std::runtime_error & e) {
+        fprintf(stderr, "runtime_error in ros1_poll: %s\n", e.what());
       }
-
-      ros1_bridge::get_ros1_services(payload, active_ros1_services);
-      {
-        std::lock_guard<std::mutex> lock(g_bridge_mutex);
-        ros1_services = active_ros1_services;
-      }
-
-      update_services(
-        ros1_node, ros2_node,
-        ros1_services, ros2_services,
-        service_bridges_1_to_2, service_bridges_2_to_1,
-        services_1_to_2_parameter_name, services_2_to_1_parameter_name,
-        service_execution_timeout, multi_threads);
     };
 
   auto ros1_poll_timer = ros1_node.createTimer(ros::Duration(1.0), ros1_poll);
@@ -331,26 +335,34 @@ int main(int argc, char * argv[])
     service_execution_timeout, multi_threads
     ]() -> void
     {
-      std::map<std::string, std::map<std::string, std::string>> active_ros2_services;
+      try {
+        std::map<std::string, std::map<std::string, std::string>> active_ros2_services;
 
-      ros1_bridge::get_ros2_services(ros2_node, active_ros2_services, already_ignored_services);
+        ros1_bridge::get_ros2_services(ros2_node, active_ros2_services, already_ignored_services);
 
-      {
-        std::lock_guard<std::mutex> lock(g_bridge_mutex);
-        ros2_services = active_ros2_services;
+        {
+          std::lock_guard<std::mutex> lock(g_bridge_mutex);
+          ros2_services = active_ros2_services;
+        }
+
+        update_services(
+          ros1_node, ros2_node,
+          ros1_services, ros2_services,
+          service_bridges_1_to_2, service_bridges_2_to_1,
+          services_1_to_2_parameter_name, services_2_to_1_parameter_name,
+          service_execution_timeout, multi_threads);
+      } catch (std::runtime_error & e) {
+        fprintf(stderr, "runtime_error in ros2_poll: %s\n", e.what());
       }
-
-      update_services(
-        ros1_node, ros2_node,
-        ros1_services, ros2_services,
-        service_bridges_1_to_2, service_bridges_2_to_1,
-        services_1_to_2_parameter_name, services_2_to_1_parameter_name,
-        service_execution_timeout, multi_threads);
     };
 
   auto check_ros1_flag = [&ros1_node] {
-      if (!ros1_node.ok()) {
-        rclcpp::shutdown();
+      try {
+        if (!ros1_node.ok()) {
+          rclcpp::shutdown();
+        }
+      } catch (std::runtime_error & e) {
+        fprintf(stderr, "runtime_error in check_ros1_flag: %s\n", e.what());
       }
     };
 
