@@ -90,7 +90,7 @@ void update_services(
                 service_bridges_2_to_1[name] = factory->service_bridge_2_to_1(
                   ros1_node, ros2_node, name, multi_threads);
                 printf("Created 2 to 1 bridge for service %s\n", name.data());
-              } catch (std::runtime_error & e) {
+              } catch (std::exception & e) {
                 fprintf(stderr, "Failed to created a bridge: %s\n", e.what());
               }
             }
@@ -142,7 +142,7 @@ void update_services(
                 service_bridges_1_to_2[name] = factory->service_bridge_1_to_2(
                   ros1_node, ros2_node, name, service_execution_timeout, multi_threads);
                 printf("Created 1 to 2 bridge for service %s\n", name.data());
-              } catch (std::runtime_error & e) {
+              } catch (std::exception & e) {
                 fprintf(stderr, "Failed to created a bridge: %s\n", e.what());
               }
             }
@@ -163,7 +163,7 @@ void update_services(
       printf("Removed 2 to 1 bridge for service %s\n", it->first.data());
       try {
         it = service_bridges_2_to_1.erase(it);
-      } catch (std::runtime_error & e) {
+      } catch (std::exception & e) {
         fprintf(stderr, "There was an error while removing 2 to 1 bridge: %s\n", e.what());
       }
     } else {
@@ -178,7 +178,7 @@ void update_services(
       try {
         it->second.server.shutdown();
         it = service_bridges_1_to_2.erase(it);
-      } catch (std::runtime_error & e) {
+      } catch (std::exception & e) {
         fprintf(stderr, "There was an error while removing 1 to 2 bridge: %s\n", e.what());
       }
     } else {
@@ -274,7 +274,7 @@ int main(int argc, char * argv[])
             ros1_node, ros2_node, "", type_name, topic_name, queue_size);
           all_handles.push_back(handles);
         }
-      } catch (std::runtime_error & e) {
+      } catch (std::exception & e) {
         fprintf(
           stderr,
           "failed to create bidirectional bridge for topic '%s' "
@@ -316,8 +316,8 @@ int main(int argc, char * argv[])
           service_bridges_1_to_2, service_bridges_2_to_1,
           services_1_to_2_parameter_name, services_2_to_1_parameter_name,
           service_execution_timeout, multi_threads);
-      } catch (std::runtime_error & e) {
-        fprintf(stderr, "runtime_error in ros1_poll: %s\n", e.what());
+      } catch (std::exception & e) {
+        fprintf(stderr, "exception in ros1_poll: %s\n", e.what());
       }
     };
 
@@ -351,8 +351,8 @@ int main(int argc, char * argv[])
           service_bridges_1_to_2, service_bridges_2_to_1,
           services_1_to_2_parameter_name, services_2_to_1_parameter_name,
           service_execution_timeout, multi_threads);
-      } catch (std::runtime_error & e) {
-        fprintf(stderr, "runtime_error in ros2_poll: %s\n", e.what());
+      } catch (std::exception & e) {
+        fprintf(stderr, "exception in ros2_poll: %s\n", e.what());
       }
     };
 
@@ -361,8 +361,8 @@ int main(int argc, char * argv[])
         if (!ros1_node.ok()) {
           rclcpp::shutdown();
         }
-      } catch (std::runtime_error & e) {
-        fprintf(stderr, "runtime_error in check_ros1_flag: %s\n", e.what());
+      } catch (std::exception & e) {
+        fprintf(stderr, "exception in check_ros1_flag: %s\n", e.what());
       }
     };
 
@@ -373,24 +373,30 @@ int main(int argc, char * argv[])
     }
   );
 
-  // ROS 1 asynchronous spinner
-  std::unique_ptr<ros::AsyncSpinner> async_spinner = nullptr;
-  if (!multi_threads) {
-    async_spinner = std::make_unique<ros::AsyncSpinner>(1);
-  } else {
-    async_spinner = std::make_unique<ros::AsyncSpinner>(0, ros1_callback_queue.get());
-  }
-  async_spinner->start();
 
-  // ROS 2 spinning loop
-  std::unique_ptr<rclcpp::Executor> executor = nullptr;
-  if (!multi_threads) {
-    executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
-  } else {
-    executor = std::make_unique<rclcpp::executors::MultiThreadedExecutor>();
+  try {
+    // ROS 1 asynchronous spinner
+    std::unique_ptr<ros::AsyncSpinner> async_spinner = nullptr;
+    if (!multi_threads) {
+      async_spinner = std::make_unique<ros::AsyncSpinner>(1);
+    } else {
+      async_spinner = std::make_unique<ros::AsyncSpinner>(0, ros1_callback_queue.get());
+    }
+    async_spinner->start();
+
+    // ROS 2 spinning loop
+    std::unique_ptr<rclcpp::Executor> executor = nullptr;
+    if (!multi_threads) {
+      executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+    } else {
+      executor = std::make_unique<rclcpp::executors::MultiThreadedExecutor>();
+    }
+
+    executor->add_node(ros2_node);
+    executor->spin();
+  } catch (std::exception & e) {
+    fprintf(stderr, "exception during executor->spin: %s\n", e.what());
   }
-  executor->add_node(ros2_node);
-  executor->spin();
 
   return 0;
 }
