@@ -388,18 +388,24 @@ public:
           } else if (goal_handle.getCommState() == actionlib::CommState::DONE) {
             auto result2 = std::make_shared<ROS2Result>();
             auto result1 = goal_handle.getResult();
-            translate_result_1_to_2(*result2, *result1);
-            RCLCPP_INFO(
-              this->logger_,
-              "ActionFactory_2_1::handle Goal [%s]",
-              goal_handle.getTerminalState().toString().c_str());
-            if (goal_handle.getTerminalState() == actionlib::TerminalState::SUCCEEDED) {
-              gh2_->succeed(result2);
-            } else {
+            if (!result1) {
+              ROS_WARN("result from ros1 not initialized. goal lost => abort ros2 goal_handle");
               gh2_->abort(result2);
+              cond_result.notify_one();
+            } else {
+              translate_result_1_to_2(*result2, *result1);
+              RCLCPP_INFO(
+                this->logger_,
+                "ActionFactory_2_1::handle Goal [%s]",
+                goal_handle.getTerminalState().toString().c_str());
+              if (goal_handle.getTerminalState() == actionlib::TerminalState::SUCCEEDED) {
+                gh2_->succeed(result2);
+              } else {
+                gh2_->abort(result2);
+              }
+              result_ready = true;
+              cond_result.notify_one();
             }
-            result_ready = true;
-            cond_result.notify_one();
             return;
           }
         },
