@@ -531,9 +531,7 @@ class MappingRule:
             self.ros1_package_name = data['ros1_package_name']
             self.ros2_package_name = data['ros2_package_name']
             self.foreign_mapping = bool(data.get('enable_foreign_mappings'))
-            self.package_mapping = (
-                len(data) == (2 + int('enable_foreign_mappings' in data))
-            )
+            self.package_mapping = self.ros1_package_name != self.ros2_package_name
         else:
             raise MappingException(
                 'Ignoring a rule without a ros1_package_name and/or ros2_package_name')
