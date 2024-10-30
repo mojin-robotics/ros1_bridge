@@ -1093,6 +1093,10 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
         # check that no fields exist in ROS 2 but not in ROS 1
         # since then it might be the case that those have been renamed and should be mapped
         for ros2_member in ros2_spec.structure.members:
+            if any(ros2_member == key[0] for key in mapping.fields_2_to_1.keys()):
+                # If they are explicitly mapped this should be fine...
+                continue
+
             for ros1_field in ros1_spec.parsed_fields():
                 if ros1_field.name.lower() == ros2_member.name:
                     break
