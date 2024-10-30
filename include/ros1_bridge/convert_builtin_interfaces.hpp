@@ -18,12 +18,14 @@
 #include "ros1_bridge/convert_decl.hpp"
 
 // include ROS 1 builtin messages
+#include "rosgraph_msgs/Log.h"
 #include "ros/duration.h"
 #include "ros/time.h"
 
 // include ROS 2 builtin messages
 #include "builtin_interfaces/msg/duration.hpp"
 #include "builtin_interfaces/msg/time.hpp"
+#include "rcl_interfaces/msg/log.hpp"
 
 namespace ros1_bridge
 {
@@ -51,6 +53,18 @@ void
 convert_2_to_1(
   const builtin_interfaces::msg::Time & ros2_msg,
   ros::Time & ros1_type);
+
+template<>
+void
+convert_1_to_2(
+  const rosgraph_msgs::Log & ros1_msg,
+  rcl_interfaces::msg::Log & ros2_msg);
+
+template<>
+void
+convert_2_to_1(
+  const rcl_interfaces::msg::Log & ros2_msg,
+  rosgraph_msgs::Log & ros1_msg);
 
 }  // namespace ros1_bridge
 

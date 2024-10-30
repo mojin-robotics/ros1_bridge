@@ -16,12 +16,14 @@
 #define ROS1_BRIDGE__BUILTIN_INTERFACES_FACTORIES_HPP_
 
 // include ROS 1 messages
+#include <rosgraph_msgs/Log.h>
 #include <std_msgs/Duration.h>
 #include <std_msgs/Time.h>
 
 // include ROS 2 messages
 #include <builtin_interfaces/msg/duration.hpp>
 #include <builtin_interfaces/msg/time.hpp>
+#include <rcl_interfaces/msg/log.hpp>
 
 #include <memory>
 #include <string>
@@ -73,6 +75,24 @@ Factory<
 >::convert_2_to_1(
   const builtin_interfaces::msg::Time & ros2_msg,
   std_msgs::Time & ros1_msg);
+
+template<>
+void
+Factory<
+  rosgraph_msgs::Log,
+  rcl_interfaces::msg::Log
+>::convert_1_to_2(
+  const rosgraph_msgs::Log & ros1_msg,
+  rcl_interfaces::msg::Log & ros2_msg);
+
+template<>
+void
+Factory<
+  rosgraph_msgs::Log,
+  rcl_interfaces::msg::Log
+>::convert_2_to_1(
+  const rcl_interfaces::msg::Log & ros2_msg,
+  rosgraph_msgs::Log & ros1_msg);
 
 }  // namespace ros1_bridge
 

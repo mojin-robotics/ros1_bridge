@@ -98,6 +98,9 @@ def generate_cpp(output_path, template_dir):
         data['ros2_package_names_msg'] + data['ros2_package_names_srv'])
     # skip builtin_interfaces since there is a custom implementation
     unique_package_names -= {'builtin_interfaces'}
+    # skip rcl_interfaces since there is a custom implementation
+    # Only for Log which is the only type that is useful to map.
+    unique_package_names -= {'rcl_interfaces'}
     data['ros2_package_names'] = list(unique_package_names)
 
     template_file = os.path.join(template_dir, 'get_factory.cpp.em')

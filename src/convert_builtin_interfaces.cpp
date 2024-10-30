@@ -58,4 +58,91 @@ convert_2_to_1(
   ros1_type.nsec = ros2_msg.nanosec;
 }
 
+
+template<>
+void
+convert_1_to_2(
+  const rosgraph_msgs::Log & ros1_msg,
+  rcl_interfaces::msg::Log & ros2_msg)
+{
+  ros1_bridge::convert_1_to_2(ros1_msg.header.stamp, ros2_msg.stamp);
+
+  // Explicitly map the values of the log level as they differ between
+  // ROS1 and ROS2.
+  switch (ros1_msg.level) {
+    case rosgraph_msgs::Log::DEBUG:
+      ros2_msg.level = rcl_interfaces::msg::Log::DEBUG;
+      break;
+
+    case rosgraph_msgs::Log::INFO:
+      ros2_msg.level = rcl_interfaces::msg::Log::INFO;
+      break;
+
+    case rosgraph_msgs::Log::WARN:
+      ros2_msg.level = rcl_interfaces::msg::Log::WARN;
+      break;
+
+    case rosgraph_msgs::Log::ERROR:
+      ros2_msg.level = rcl_interfaces::msg::Log::ERROR;
+      break;
+
+    case rosgraph_msgs::Log::FATAL:
+      ros2_msg.level = rcl_interfaces::msg::Log::FATAL;
+      break;
+
+    default:
+      ros2_msg.level = ros1_msg.level;
+      break;
+  }
+
+  ros2_msg.name = ros1_msg.name;
+  ros2_msg.msg = ros1_msg.msg;
+  ros2_msg.file = ros1_msg.file;
+  ros2_msg.function = ros1_msg.function;
+  ros2_msg.line = ros1_msg.line;
+}
+
+template<>
+void
+convert_2_to_1(
+  const rcl_interfaces::msg::Log & ros2_msg,
+  rosgraph_msgs::Log & ros1_msg)
+{
+  ros1_bridge::convert_2_to_1(ros2_msg.stamp, ros1_msg.header.stamp);
+
+  // Explicitly map the values of the log level as they differ between
+  // ROS1 and ROS2.
+  switch (ros2_msg.level) {
+    case rcl_interfaces::msg::Log::DEBUG:
+      ros1_msg.level = rosgraph_msgs::Log::DEBUG;
+      break;
+
+    case rcl_interfaces::msg::Log::INFO:
+      ros1_msg.level = rosgraph_msgs::Log::INFO;
+      break;
+
+    case rcl_interfaces::msg::Log::WARN:
+      ros1_msg.level = rosgraph_msgs::Log::WARN;
+      break;
+
+    case rcl_interfaces::msg::Log::ERROR:
+      ros1_msg.level = rosgraph_msgs::Log::ERROR;
+      break;
+
+    case rcl_interfaces::msg::Log::FATAL:
+      ros1_msg.level = rosgraph_msgs::Log::FATAL;
+      break;
+
+    default:
+      ros1_msg.level = ros1_msg.level;
+      break;
+  }
+
+  ros1_msg.name = ros2_msg.name;
+  ros1_msg.msg = ros2_msg.msg;
+  ros1_msg.file = ros2_msg.file;
+  ros1_msg.function = ros2_msg.function;
+  ros1_msg.line = ros2_msg.line;
+}
+
 }  // namespace ros1_bridge
