@@ -52,6 +52,18 @@ get_factory_builtin_interfaces(
       >
     >("std_msgs/Time", ros2_type_name);
   }
+  if (
+    (ros1_type_name == "rosgraph_msgs/Log" || ros1_type_name == "") &&
+    ros2_type_name == "rcl_interfaces/msg/Log")
+  {
+    return std::make_shared<
+      Factory<
+        rosgraph_msgs::Log,
+        rcl_interfaces::msg::Log
+      >
+    >("rosgraph_msgs/Log", ros2_type_name);
+  }
+
   return std::shared_ptr<FactoryInterface>();
 }
 
@@ -102,6 +114,30 @@ Factory<
   std_msgs::Time & ros1_msg)
 {
   ros1_bridge::convert_2_to_1(ros2_msg, ros1_msg.data);
+}
+
+template<>
+void
+Factory<
+  rosgraph_msgs::Log,
+  rcl_interfaces::msg::Log
+>::convert_1_to_2(
+  const rosgraph_msgs::Log & ros1_msg,
+  rcl_interfaces::msg::Log & ros2_msg)
+{
+  ros1_bridge::convert_1_to_2(ros1_msg, ros2_msg);
+}
+
+template<>
+void
+Factory<
+  rosgraph_msgs::Log,
+  rcl_interfaces::msg::Log
+>::convert_2_to_1(
+  const rcl_interfaces::msg::Log & ros2_msg,
+  rosgraph_msgs::Log & ros1_msg)
+{
+  ros1_bridge::convert_2_to_1(ros2_msg, ros1_msg);
 }
 
 }  // namespace ros1_bridge

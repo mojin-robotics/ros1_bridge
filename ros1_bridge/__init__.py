@@ -98,6 +98,9 @@ def generate_cpp(output_path, template_dir):
         data['ros2_package_names_msg'] + data['ros2_package_names_srv'])
     # skip builtin_interfaces since there is a custom implementation
     unique_package_names -= {'builtin_interfaces'}
+    # skip rcl_interfaces since there is a custom implementation
+    # Only for Log which is the only type that is useful to map.
+    unique_package_names -= {'rcl_interfaces'}
     data['ros2_package_names'] = list(unique_package_names)
 
     template_file = os.path.join(template_dir, 'get_factory.cpp.em')
@@ -531,9 +534,7 @@ class MappingRule:
             self.ros1_package_name = data['ros1_package_name']
             self.ros2_package_name = data['ros2_package_name']
             self.foreign_mapping = bool(data.get('enable_foreign_mappings'))
-            self.package_mapping = (
-                len(data) == (2 + int('enable_foreign_mappings' in data))
-            )
+            self.package_mapping = self.ros1_package_name != self.ros2_package_name
         else:
             raise MappingException(
                 'Ignoring a rule without a ros1_package_name and/or ros2_package_name')
@@ -1095,6 +1096,10 @@ def determine_field_mapping(ros1_msg, ros2_msg, mapping_rules, msg_idx):
         # check that no fields exist in ROS 2 but not in ROS 1
         # since then it might be the case that those have been renamed and should be mapped
         for ros2_member in ros2_spec.structure.members:
+            if any(ros2_member == key[0] for key in mapping.fields_2_to_1.keys()):
+                # If they are explicitly mapped this should be fine...
+                continue
+
             for ros1_field in ros1_spec.parsed_fields():
                 if ros1_field.name.lower() == ros2_member.name:
                     break
