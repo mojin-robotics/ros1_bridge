@@ -214,30 +214,35 @@ int main(int argc, char * argv[])
   std::map<std::string, ros1_bridge::ServiceBridge1to2> service_bridges_1_to_2;
   std::map<std::string, ros1_bridge::ServiceBridge2to1> service_bridges_2_to_1;
 
+  // use ros2 parameters to configure the keys to look for in the ros1 parameters...
+  // wired, but didn't feel like extending the argv parsing to handle both '--multi-threads' positional arguments...
+  std::string topics_key;
+  std::string services_1_to_2_key;
+  std::string services_2_to_1_key;
+
+  ros2_node->declare_parameter("topics_key", "topics");
+  ros2_node->declare_parameter("services_1_to_2_key", "services_1_to_2");
+  ros2_node->declare_parameter("services_2_to_1_key", "services_2_to_1");
+
+  ros2_node->get_parameter("topics_key", topics_key);
+  ros2_node->get_parameter("services_1_to_2_key", services_1_to_2_key);
+  ros2_node->get_parameter("services_2_to_1_key", services_2_to_1_key);
+
   // bridge all topics listed in a ROS 1 parameter
   // the topics parameter needs to be an array
   // and each item needs to be a dictionary with the following keys;
   // topic: the name of the topic to bridge (e.g. '/topic_name')
   // type: the type of the topic to bridge (e.g. 'pkgname/msg/MsgName')
   // queue_size: the queue size to use (default: 100)
-  const char * topics_parameter_name = "topics";
+  const char * topics_parameter_name = topics_key.c_str();
   // the services parameters need to be arrays
   // and each item needs to be a dictionary with the following keys;
   // service: the name of the service to bridge (e.g. '/service_name')
   // type: the type of the service to bridge (e.g. 'pkgname/srv/SrvName')
-  const char * services_1_to_2_parameter_name = "services_1_to_2";
-  const char * services_2_to_1_parameter_name = "services_2_to_1";
+  const char * services_1_to_2_parameter_name = services_1_to_2_key.c_str();
+  const char * services_2_to_1_parameter_name = services_2_to_1_key.c_str();
   const char * service_execution_timeout_parameter_name =
     "ros1_bridge/parameter_bridge/service_execution_timeout";
-  // if (argc > 1) {
-  //   topics_parameter_name = argv[1];
-  // }
-  // if (argc > 2) {
-  //   services_1_to_2_parameter_name = argv[2];
-  // }
-  // if (argc > 3) {
-  //   services_2_to_1_parameter_name = argv[3];
-  // }
 
   int service_execution_timeout{5};
   ros1_node.getParamCached(
